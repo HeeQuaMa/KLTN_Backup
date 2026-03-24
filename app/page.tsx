@@ -1,18 +1,24 @@
-import Footer from "@/components/footer";
-import Header from "@/components/header";
-import Navigation from "@/components/navigation";
-import HeroSection from "@/components/section";
+import { Header, Footer, Navigation } from "@/components/layout";
+import ProductList from "@/components/shared/ProductList";
+import {
+  AiPcBuilderBanner,
+  CategoryFilter,
+  HeroSection,
+} from "@/features/home/components";
+import { product, productBuildPC } from "@/features/home/utils/product";
 
 const page = () => {
   return (
     <div>
       <Header />
       <Navigation />
-      <div className="px-12 py-7.5">
+      <main className="px-12 py-7.5">
         <HeroSection />
-        Hello world!!
-      </div>
-
+        <CategoryFilter />
+        <ProductList title="Sản phẩm nổi bật" products={product} />
+        <ProductList title="Linh kiện build PC" products={productBuildPC} />
+        <AiPcBuilderBanner />
+      </main>
       <Footer />
     </div>
   );
