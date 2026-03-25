@@ -16,12 +16,12 @@ const ProductList = ({ title, products }: ProductListProps) => {
   const formatPriceVND = (price: number) => `${vndFormatter.format(price)}`;
   return (
     <div className="mt-8">
-      <h2 className="text-[28px] font-bold">{title}</h2>
+      <h2 className="text-2xl font-bold lg:text-[28px]">{title}</h2>
       <Line />
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 sm:gap-5">
         {products.map((data) => (
           <div
-            className="bg-card flex min-h-110 w-full flex-col rounded-2xl border border-[#E5E7EB] p-5 lg:min-w-77.5"
+            className="bg-card flex h-full w-full flex-col rounded-2xl border border-[#E5E7EB] p-4 sm:p-5 shadow-sm transition-shadow hover:shadow-md"
             key={data.name}
           >
             <div className="flex h-44 w-full items-center justify-center overflow-hidden rounded-xl">
