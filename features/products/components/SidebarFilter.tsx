@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 const SidebarFilter = () => {
   const [activePrice, setActivePrice] = useState("25 - 40 triệu");
   const [activeBrand, setActiveBrand] = useState("DELL");
+  const [activeCpu, setActiveCpu] = useState("");
+  const [activeRam, setActiveRam] = useState("");
 
   const prices = [
     "Dưới 15 triệu",
@@ -91,9 +93,24 @@ const SidebarFilter = () => {
             <label
               key={cpu}
               className="group flex cursor-pointer flex-row items-center gap-3"
+              onClick={() => setActiveCpu(cpu === activeCpu ? "" : cpu)}
             >
-              <div className="flex h-5 w-5 items-center justify-center rounded-lg border border-gray-300 bg-white group-hover:border-primary/50" />
-              <span className="text-base text-gray-600 select-none group-hover:text-gray-900">
+              <div
+                className={cn(
+                  "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
+                  activeCpu === cpu
+                    ? "border-primary bg-primary"
+                    : "border-gray-300 bg-white group-hover:border-primary/50"
+                )}
+              />
+              <span
+                className={cn(
+                  "text-base select-none transition-colors",
+                  activeCpu === cpu
+                    ? "font-bold text-primary"
+                    : "text-gray-600 group-hover:text-gray-900"
+                )}
+              >
                 {cpu}
               </span>
             </label>
@@ -112,7 +129,13 @@ const SidebarFilter = () => {
           {rams.map((ram) => (
             <button
               key={ram}
-              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-base font-bold text-gray-600 uppercase transition-all hover:border-gray-300 hover:text-gray-900"
+              onClick={() => setActiveRam(ram === activeRam ? "" : ram)}
+              className={cn(
+                "rounded-md border px-4 py-2 text-base font-bold uppercase transition-all",
+                activeRam === ram
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900"
+              )}
             >
               {ram}
             </button>
