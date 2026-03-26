@@ -6,13 +6,13 @@ import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 function Header() {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 transition-all md:px-8 lg:px-12 xl:px-16 lg:py-6.25">
+    <header className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 transition-all md:px-8 lg:px-12 lg:py-6.25 xl:px-16">
       <div className="text-xl font-bold md:text-2xl lg:text-[32px]">
         <Link href={"/"}>
           <span className="text-primary">Net</span>Tech
         </Link>
       </div>
-      <div className="order-last flex h-10 w-full lg:order-none lg:h-12.5 lg:w-auto">
+      <div className="order-last flex h-10 w-full lg:order-0 lg:h-12.5 lg:w-auto">
         <Input
           type="search"
           placeholder="Tìm kiếm linh kiện, Laptop, VGA..."

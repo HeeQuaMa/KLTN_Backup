@@ -5,11 +5,11 @@ import { useState } from "react";
 const CategoryFilter = () => {
   const [activeCategory, setActiveCategory] = useState("Build PC");
   return (
-    <div className="mt-8 flex gap-3 overflow-x-auto pb-4 pt-4 sm:gap-5 lg:mt-10 [&::-webkit-scrollbar]:hidden">
+    <div className="mt-8 flex gap-3 overflow-x-auto pt-4 pb-4 sm:gap-5 lg:mt-10 [&::-webkit-scrollbar]:hidden">
       {category.map((item) => (
         <div
           key={item.id}
-          className="cursor-pointer shrink-0"
+          className="shrink-0 cursor-pointer"
           onClick={() => setActiveCategory(item.nameCategory)}
         >
           <CardCategory

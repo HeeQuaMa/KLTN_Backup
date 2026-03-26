@@ -4,13 +4,13 @@ import Image from "next/image";
 
 const AiPcBuilderBanner = () => {
   return (
-    <section className="mt-8 mb-8 w-full rounded-2xl bg-[#111827] px-4 py-8 text-white lg:mt-10 lg:min-h-75 lg:px-14 lg:py-10">
+    <section className="mt-8 mb-8 w-full rounded-2xl bg-background-third px-4 py-8 text-white lg:mt-10 lg:min-h-75 lg:px-14 lg:py-10">
       <div className="mx-0 flex flex-col gap-8 sm:mx-4 lg:mx-8 lg:flex-row lg:items-center lg:justify-between xl:gap-12">
-        <div className="flex-1 max-w-[600px]">
-          <p className="text-sm font-semibold tracking-wide text-[#60A5FA] uppercase lg:text-lg">
+        <div className="max-w-150 flex-1">
+          <p className="text-sm font-semibold tracking-wide text-text-highlight uppercase lg:text-lg">
             TÍNH NĂNG ĐỘC QUYỀN
           </p>
-          <h2 className="mt-2 text-2xl font-bold leading-tight lg:mt-2 lg:text-[40px] xl:text-[52px]">
+          <h2 className="mt-2 text-2xl leading-tight font-bold lg:mt-2 lg:text-[40px] xl:text-[52px]">
             XÂY DỰNG CẤU HÌNH PC (AI)
           </h2>
           <p className="text-secondary-text1 mt-3 text-base lg:mt-4 lg:text-lg">
@@ -25,7 +25,7 @@ const AiPcBuilderBanner = () => {
           </Button>
         </div>
 
-        <div className="w-full shrink-0 lg:w-[45%] max-w-[500px] rounded-2xl lg:mt-0">
+        <div className="w-full max-w-125 shrink-0 rounded-2xl lg:mt-0 lg:w-[45%]">
           <Image
             src={"/images/pink.jpg"}
             alt="PC Gaming"
