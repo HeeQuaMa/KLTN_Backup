@@ -1,10 +1,9 @@
-import type { Product } from "@/features/home/utils/product";
 import Line from "./Line";
-import ProductCard from "./ProductCard";
+import ProductCard, { ProductType } from "./ProductCard";
 
 interface ProductListProps {
   title: string;
-  products: Product[];
+  products: ProductType[];
 }
 
 const ProductList = ({ title, products }: ProductListProps) => {
