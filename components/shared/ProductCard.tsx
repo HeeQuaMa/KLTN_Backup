@@ -1,6 +1,10 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { useCartStore } from "@/store/useCartStore";
+import { useRouter } from "next/navigation";
 
 export interface ProductType {
   id?: number | string;
@@ -23,8 +27,25 @@ const ProductCard = ({ product }: ProductCardProps) => {
   });
   const formatPriceVND = (price: number) => `${vndFormatter.format(price)}`;
 
+  const addItem = useCartStore((state) => state.addItem);
+  const router = useRouter();
+
   // Default to ID 1 if missing so it doesn't crash routing
   const productId = product.id || 1;
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addItem({
+      id: productId,
+      cartItemId: `${productId}-default`,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1,
+      configName: "Mặc định",
+    });
+    router.push("/cart");
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
@@ -70,7 +91,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </Link>
       
       {/* Nút nằm ngoài thẻ Link để tránh lỗi click lồng xếp (nested interactive elements) */}
-      <Button className="bg-primary hover:bg-primary-hover/90 mt-auto w-full rounded-md font-bold text-white">
+      <Button 
+        onClick={handleBuyNow}
+        className="bg-primary hover:bg-primary-hover/90 mt-auto w-full cursor-pointer rounded-md font-bold text-white">
         MUA NGAY
       </Button>
     </div>

@@ -4,9 +4,34 @@ import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DetailedProduct, ProductConfig } from "@/features/products/utils/mockProductDetail";
+import { useCartStore } from "@/store/useCartStore";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export const ProductInfo = ({ product }: { product: DetailedProduct }) => {
   const [activeConfig, setActiveConfig] = useState<ProductConfig>(product.configurations[0]);
+  const addItem = useCartStore((state) => state.addItem);
+  const router = useRouter();
+
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      cartItemId: `${product.id}-${activeConfig.id}`,
+      name: product.name,
+      price: product.basePrice + activeConfig.priceDelta,
+      image: product.images[0],
+      quantity: 1,
+      configName: activeConfig.name,
+      sku: product.sku,
+    });
+    
+    toast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    router.push("/cart");
+  };
 
   const vndFormatter = new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -99,11 +124,15 @@ export const ProductInfo = ({ product }: { product: DetailedProduct }) => {
 
       {/* Nút Hành động */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <Button className="flex-1 cursor-pointer bg-destructive hover:bg-destructive/90 h-14 text-lg font-bold text-white shadow-md flex-col items-center justify-center">
+        <Button 
+          onClick={handleBuyNow}
+          className="flex-1 cursor-pointer bg-destructive hover:bg-destructive/90 h-14 text-lg font-bold text-white shadow-md flex-col items-center justify-center">
           <span>MUA NGAY</span>
           <span className="text-xs font-normal opacity-90">Giao hàng tận nơi hoặc nhận tại shop</span>
         </Button>
-        <Button className="flex-1 cursor-pointer bg-primary hover:bg-primary-hover/90 h-14 text-lg font-bold text-white shadow-md flex items-center justify-center gap-2">
+        <Button 
+          onClick={handleAddToCart}
+          className="flex-1 cursor-pointer bg-primary hover:bg-primary-hover/90 h-14 text-lg font-bold text-white shadow-md flex items-center justify-center gap-2">
           <ShoppingCart className="h-5 w-5" />
           <span>THÊM VÀO GIỎ</span>
         </Button>
