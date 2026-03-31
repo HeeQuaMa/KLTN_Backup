@@ -51,20 +51,24 @@ function Header() {
           <p className="hidden md:block">Giỏ hàng</p>
         </Link>
         <div className="flex items-center gap-2 lg:h-10">
-          <Button
-            className={cn(
-              "hover:bg-primary-hover/90 h-8 cursor-pointer px-3 text-sm text-white md:h-10 md:px-4 lg:w-30 lg:text-base",
-            )}
-          >
-            Đăng nhập
-          </Button>
-          <Button
-            className={cn(
-              "hover:bg-primary-hover/90 h-8 cursor-pointer px-3 text-sm text-white md:h-10 md:px-4 lg:w-30 lg:text-base",
-            )}
-          >
-            Đăng ký
-          </Button>
+          <Link href="/login">
+            <Button
+              className={cn(
+                "hover:bg-primary-hover/90 h-8 cursor-pointer px-3 text-sm text-white md:h-10 md:px-4 lg:w-30 lg:text-base",
+              )}
+            >
+              Đăng nhập
+            </Button>
+          </Link>
+          <Link href="/register">
+            <Button
+              className={cn(
+                "hover:bg-primary-hover/90 h-8 cursor-pointer px-3 text-sm text-white md:h-10 md:px-4 lg:w-30 lg:text-base",
+              )}
+            >
+              Đăng ký
+            </Button>
+          </Link>
         </div>
       </div>
     </header>
