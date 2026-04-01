@@ -18,6 +18,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Stepper } from "@/components/ui/stepper";
 
 export default function CartPage() {
   const router = useRouter();
@@ -51,28 +52,7 @@ export default function CartPage() {
         </h1>
 
         {/* Stepper (Chỉ hiện trên Desktop/Tablet) */}
-        <div className="hidden items-center text-sm font-medium text-gray-500 md:flex">
-          <div className="text-primary flex items-center gap-2">
-            <span className="bg-primary flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
-              1
-            </span>
-            Giỏ hàng
-          </div>
-          <div className="mx-4 h-px w-10 bg-gray-300" />
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs">
-              2
-            </span>
-            Thanh toán
-          </div>
-          <div className="mx-4 h-px w-10 bg-gray-300" />
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs">
-              3
-            </span>
-            Hoàn tất
-          </div>
-        </div>
+        <Stepper currentStep={1} />
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row">

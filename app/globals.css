@@ -41,6 +41,11 @@
   --sidebar-ring: oklch(0.708 0 0);
   --background-third: oklch(0.208 0.042 265.975); /* #111827 */
   --text-highlight: oklch(0.705 0.153 254.382); /* #60A5FA */
+  --success: #00A550;
+  --vnpay: #005BAA;
+  --momo: #A50064;
+  --facebook: #1877F2;
+  --heading: #0B1A3F;
 }
 
 .dark {
@@ -77,6 +82,11 @@
   --sidebar-ring: oklch(0.556 0 0);
   --background-third: oklch(0.145 0 0);
   --text-highlight: oklch(0.8 0.153 254.382);
+  --success: #00A550;
+  --vnpay: #005BAA;
+  --momo: #A50064;
+  --facebook: #1877F2;
+  --heading: #0B1A3F;
 }
 
 @theme inline {
@@ -116,6 +126,11 @@
   --color-background: var(--background);
   --color-background-third: var(--background-third);
   --color-text-highlight: var(--text-highlight);
+  --color-success: var(--success);
+  --color-vnpay: var(--vnpay);
+  --color-momo: var(--momo);
+  --color-facebook: var(--facebook);
+  --color-heading: var(--heading);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

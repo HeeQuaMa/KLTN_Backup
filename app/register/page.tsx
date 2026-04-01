@@ -89,7 +89,7 @@ export default function RegisterPage() {
           <label className="flex items-start gap-2 cursor-pointer text-xs">
             <input type="checkbox" {...register("agreeTerms")} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary" />
             <span className="text-gray-600">
-              Tôi đồng ý với <Link href="#" className="text-[#0066FF] hover:underline">Chính sách bảo mật</Link> và <Link href="#" className="text-[#0066FF] hover:underline">Điều khoản sử dụng</Link> của NetTech.
+              Tôi đồng ý với <Link href="#" className="text-primary hover:underline">Chính sách bảo mật</Link> và <Link href="#" className="text-primary hover:underline">Điều khoản sử dụng</Link> của NetTech.
             </span>
           </label>
           {errors.agreeTerms && <p className="text-[11px] text-destructive ml-6">{errors.agreeTerms.message as string}</p>}
@@ -104,7 +104,7 @@ export default function RegisterPage() {
         <Button 
           type="submit" 
           disabled={isSubmitting}
-          className="w-full h-11 text-sm font-bold bg-[#0066FF] hover:bg-[#0052cc] text-white"
+          className="w-full h-11 text-sm font-bold bg-primary hover:bg-primary-hover text-white"
         >
           {isSubmitting ? "ĐANG XỬ LÝ..." : "ĐĂNG KÝ"}
         </Button>
@@ -115,7 +115,7 @@ export default function RegisterPage() {
         {/* Sign in Link */}
         <div className="text-center text-xs font-medium text-gray-700">
           Đã có tài khoản?{" "}
-          <Link href="/login" className="font-bold text-[#0066FF] hover:underline">
+          <Link href="/login" className="font-bold text-primary hover:underline">
             Đăng nhập
           </Link>
         </div>

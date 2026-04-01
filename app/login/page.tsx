@@ -81,7 +81,7 @@ export default function LoginPage() {
             <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
             <span className="text-gray-600">Duy trì đăng nhập</span>
           </label>
-          <Link href="/forgot-password" className="text-sm font-bold text-[#0066FF] hover:underline">
+          <Link href="/forgot-password" className="text-sm font-bold text-primary hover:underline">
             Quên mật khẩu?
           </Link>
         </div>
@@ -90,7 +90,7 @@ export default function LoginPage() {
         <Button 
           type="submit" 
           disabled={isSubmitting}
-          className="w-full h-12 text-[15px] font-bold bg-[#0066FF] hover:bg-[#0052cc] text-white"
+          className="w-full h-12 text-[15px] font-bold bg-primary hover:bg-primary-hover text-white"
         >
           {isSubmitting ? "ĐANG XỬ LÝ..." : "ĐĂNG NHẬP"}
         </Button>
@@ -116,7 +116,7 @@ export default function LoginPage() {
           </Button>
           <Button 
             type="button" 
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1877F2] text-white hover:bg-[#1864cc] transition-colors shadow-sm p-0 border-0"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1877f2] text-white hover:bg-[#1877f2]/90 transition-colors shadow-sm p-0 border-0"
           >
             <FaFacebook className="h-6 w-6" />
           </Button>
@@ -131,7 +131,7 @@ export default function LoginPage() {
         {/* Sign up Link */}
         <div className="text-center pt-4 text-sm font-medium text-gray-700">
           Chưa có tài khoản?{" "}
-          <Link href="/register" className="font-bold text-[#0066FF] hover:underline">
+          <Link href="/register" className="font-bold text-primary hover:underline">
             Đăng ký ngay
           </Link>
         </div>

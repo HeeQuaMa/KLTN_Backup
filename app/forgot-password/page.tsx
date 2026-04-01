@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 h-10 w-full max-w-[320px] bg-[#0066FF] text-xs font-bold text-white hover:bg-[#0052cc]"
+          className="mt-2 h-10 w-full max-w-[320px] bg-primary text-xs font-bold text-white hover:bg-primary-hover"
         >
           {isSubmitting ? "ĐANG XỬ LÝ..." : "GỬI MÃ XÁC MINH"}
         </Button>
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
         <div className="mt-6 pt-4">
           <Link
             href="/login"
-            className="flex items-center text-xs font-bold text-[#0066FF] hover:underline"
+            className="flex items-center text-xs font-bold text-primary hover:underline"
           >
             <ArrowLeft className="mr-1 h-3 w-3" /> Quay lại Đăng nhập
           </Link>
