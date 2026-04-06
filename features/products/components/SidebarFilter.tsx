@@ -122,7 +122,7 @@ const SidebarFilter = ({ categorySlug }: SidebarFilterProps) => {
                 >
                   <div
                     className={cn(
-                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border transition-all",
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border transition-all",
                       isActive
                         ? "bg-primary border-primary"
                         : "border-input bg-background group-hover:border-primary/50",

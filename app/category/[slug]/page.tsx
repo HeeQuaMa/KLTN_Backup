@@ -43,9 +43,11 @@ export default async function CategoryPage({
           <ProductSortBar />
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
-            {mockProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {mockProducts
+              .filter((product) => product.categorySlug === slug)
+              .map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
           </div>
 
           <ProductPagination />
