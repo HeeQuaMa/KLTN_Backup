@@ -1,5 +1,5 @@
 import { ProductCard } from "@/components/shared";
-import { mockProducts } from "@/features/products/utils/mockData";
+import { getProducts } from "@/features/products/api/productsApi";
 import {
   ProductSortBar,
   SidebarFilter,
@@ -28,6 +28,11 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params;
   const title = categoryTitles[slug] || "Danh mục sản phẩm";
+  
+  const productsList = await getProducts();
+  const categoryProducts = productsList.filter(
+    (product) => product.categorySlug === slug
+  );
 
   return (
     <main className="min-h-screen bg-gray-50/50 px-4 py-6 md:px-8 lg:px-12 lg:py-10 xl:px-16">
@@ -43,11 +48,9 @@ export default async function CategoryPage({
           <ProductSortBar />
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
-            {mockProducts
-              .filter((product) => product.categorySlug === slug)
-              .map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            {categoryProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
 
           <ProductPagination />

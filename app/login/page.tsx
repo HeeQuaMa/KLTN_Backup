@@ -15,6 +15,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { loginSchema, LoginFormData } from "@/features/auth/utils/validation";
+import { authApi } from "@/features/auth/api/authApi";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,13 +29,25 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    // Mock Login action
-    await new Promise(resolve => setTimeout(resolve, 800));
-    console.log("Login data:", data);
-    
-    login(data);
-    toast.success("Đăng nhập thành công!", { autoClose: 2000 });
-    router.replace("/");
+    try {
+      const response = await authApi.login(data);
+      
+      // response: { access_token, user: { fullName, email, role, ... } }
+      localStorage.setItem("access_token", response.access_token);
+
+      // Cập nhật Zustand Store bằng real data
+      login({
+        id: response.user?.id || "u1", // Backend có thể trả ID khác key
+        name: response.user?.fullName || "Người dùng",
+        email: response.user?.email || (data.emailOrPhone.includes("@") ? data.emailOrPhone : ""),
+        phone: response.user?.phone || (!data.emailOrPhone.includes("@") ? data.emailOrPhone : ""),
+      });
+
+      toast.success("Đăng nhập thành công!", { autoClose: 2000 });
+      router.replace("/");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Sai thông tin đăng nhập!");
+    }
   };
 
   return (

@@ -5,32 +5,68 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DetailedProduct, ProductConfig } from "@/features/products/utils/mockProductDetail";
 import { useCartStore } from "@/store/useCartStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { cartApi } from "@/features/cart/api/cartApi";
 
 export const ProductInfo = ({ product }: { product: DetailedProduct }) => {
   const [activeConfig, setActiveConfig] = useState<ProductConfig>(product.configurations[0]);
+  const [isAdding, setIsAdding] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
+  const { isLoggedIn, user } = useAuthStore();
   const router = useRouter();
 
-  const handleAddToCart = () => {
-    addItem({
-      id: product.id,
-      cartItemId: `${product.id}-${activeConfig.id}`,
-      name: product.name,
-      price: product.basePrice + activeConfig.priceDelta,
-      image: product.images[0],
-      quantity: 1,
-      configName: activeConfig.name,
-      sku: product.sku,
-    });
-    
-    toast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
+  const handleAddToCart = async () => {
+    if (!isLoggedIn || !user) {
+      toast.warning("Vui lòng đăng nhập để thêm sản phẩm vào giỏ!");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setIsAdding(true);
+      const cartItemId = `${product.id}-${activeConfig.id}`;
+      const price = product.basePrice + activeConfig.priceDelta;
+
+      // Update backend via API
+      await cartApi.addToCart({
+        userId: user.id,
+        productId: String(product.id),
+        cartItemId,
+        name: product.name,
+        price,
+        image: product.images?.[0] || "",
+        quantity: 1,
+        configName: activeConfig.name,
+        sku: product.sku,
+      });
+
+      // Update local state if backend succeeds
+      addItem({
+        id: product.id,
+        cartItemId,
+        name: product.name,
+        price,
+        image: product.images?.[0] || "",
+        quantity: 1,
+        configName: activeConfig.name,
+        sku: product.sku,
+      });
+      
+      toast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Lỗi thêm giỏ hàng!");
+    } finally {
+      setIsAdding(false);
+    }
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
-    router.push("/cart");
+  const handleBuyNow = async () => {
+    await handleAddToCart();
+    if (isLoggedIn && user) {
+      router.push("/cart");
+    }
   };
 
   const vndFormatter = new Intl.NumberFormat("vi-VN", {
@@ -122,19 +158,26 @@ export const ProductInfo = ({ product }: { product: DetailedProduct }) => {
         </ul>
       </div>
 
-      {/* Nút Hành động */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Button 
           onClick={handleBuyNow}
+          disabled={isAdding}
           className="flex-1 cursor-pointer bg-destructive hover:bg-destructive/90 h-14 text-lg font-bold text-white shadow-md flex-col items-center justify-center">
-          <span>MUA NGAY</span>
+          <span>{isAdding ? "ĐANG XỬ LÝ..." : "MUA NGAY"}</span>
           <span className="text-xs font-normal opacity-90">Giao hàng tận nơi hoặc nhận tại shop</span>
         </Button>
         <Button 
           onClick={handleAddToCart}
+          disabled={isAdding}
           className="flex-1 cursor-pointer bg-primary hover:bg-primary-hover/90 h-14 text-lg font-bold text-white shadow-md flex items-center justify-center gap-2">
-          <ShoppingCart className="h-5 w-5" />
-          <span>THÊM VÀO GIỎ</span>
+          {isAdding ? (
+            <span>ĐANG XỬ LÝ...</span>
+          ) : (
+            <>
+              <ShoppingCart className="h-5 w-5" />
+              <span>THÊM VÀO GIỎ</span>
+            </>
+          )}
         </Button>
       </div>
     </div>

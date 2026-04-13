@@ -8,6 +8,7 @@ export const loginSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
+  fullName: z.string().min(2, "Họ và tên phải có ít nhất 2 ký tự"),
   email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
   phone: z.string().min(10, "SĐT không hợp lệ").regex(/^[0-9]+$/, "SĐT chỉ được chứa chữ số"),
   password: z.string().min(8, "Mật khẩu phải từ 8-25 ký tự").max(25, "Mật khẩu tối đa 25 ký tự"),

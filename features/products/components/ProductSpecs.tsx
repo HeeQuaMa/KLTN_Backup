@@ -6,40 +6,16 @@ export const ProductSpecs = ({ specs }: { specs: DetailedProduct["specs"] }) => 
       <h2 className="text-xl font-bold text-gray-900">Thông số kỹ thuật</h2>
       
       <div className="mt-6 flex flex-col">
-        <div className="grid grid-cols-1 border-b border-gray-200 py-4 sm:grid-cols-3">
-          <div className="text-sm text-gray-500 sm:col-span-1">CPU</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{specs.cpu}</div>
-        </div>
-        
-        <div className="grid grid-cols-1 border-b border-gray-200 py-4 sm:grid-cols-3">
-          <div className="text-sm text-gray-500 sm:col-span-1">RAM</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{specs.ram}</div>
-        </div>
-
-        <div className="grid grid-cols-1 border-b border-gray-200 py-4 sm:grid-cols-3">
-          <div className="text-sm text-gray-500 sm:col-span-1">Ổ cứng</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{specs.storage}</div>
-        </div>
-
-        <div className="grid grid-cols-1 border-b border-gray-200 py-4 sm:grid-cols-3">
-          <div className="text-sm text-gray-500 sm:col-span-1">Card đồ họa (VGA)</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{specs.vga}</div>
-        </div>
-
-        <div className="grid grid-cols-1 border-b border-gray-200 py-4 sm:grid-cols-3">
-          <div className="text-sm text-gray-500 sm:col-span-1">Màn hình</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{specs.display}</div>
-        </div>
-
-        <div className="grid grid-cols-1 border-b border-gray-200 py-4 sm:grid-cols-3">
-          <div className="text-sm text-gray-500 sm:col-span-1">Pin</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{specs.battery}</div>
-        </div>
-
-        <div className="grid grid-cols-1 py-4 sm:grid-cols-3">
-          <div className="text-sm text-gray-500 sm:col-span-1">Trọng lượng</div>
-          <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{specs.weight}</div>
-        </div>
+        {Object.keys(specs || {}).length === 0 ? (
+          <div className="py-4 text-sm text-gray-500">Chưa có thông số kỹ thuật.</div>
+        ) : (
+          Object.entries(specs).map(([key, value], idx) => (
+            <div key={idx} className="grid grid-cols-1 border-b border-gray-200 py-4 sm:grid-cols-3">
+              <div className="text-sm text-gray-500 sm:col-span-1 capitalize">{key.replace(/_/g, ' ')}</div>
+              <div className="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">{String(value)}</div>
+            </div>
+          ))
+        )}
       </div>
 
       <div className="mt-6 flex justify-center">

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { mockProductDetail } from "@/features/products/utils/mockProductDetail";
-import { mockProducts } from "@/features/products/utils/mockData";
+import { getProducts, getProductById } from "@/features/products/api/productsApi";
 import { ProductList } from "@/components/shared";
 import {
   ProductGallery,
@@ -16,9 +15,9 @@ interface ProductPageProps {
 const ProductPage = async ({ params }: ProductPageProps) => {
   const { id } = await params;
 
-  // Tạm thời luôn load mock product chi tiết (Asus ROG) cho mọi ID click vào để demo UI
-  // Sau này sẽ tích hợp API fetch data dựa trên id
-  const product = mockProductDetail;
+  // Lấy data chi tiết sản phẩm từ API
+  const product = await getProductById(id);
+  const productsList = await getProducts();
 
   if (!product) {
     notFound();
@@ -50,7 +49,7 @@ const ProductPage = async ({ params }: ProductPageProps) => {
       </div>
 
       <div className="mt-16 w-full">
-        <ProductList title="SẢN PHẨM TƯƠNG TỰ" products={mockProducts.slice(0, 5)} />
+        <ProductList title="SẢN PHẨM TƯƠNG TỰ" products={productsList.slice(0, 5)} />
       </div>
     </main>
   );

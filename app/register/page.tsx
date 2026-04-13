@@ -11,6 +11,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { registerSchema, RegisterFormData } from "@/features/auth/utils/validation";
+import { authApi } from "@/features/auth/api/authApi";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,22 +19,40 @@ export default function RegisterPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormData>({
     // @ts-ignore
     resolver: zodResolver(registerSchema),
-    defaultValues: { email: "", phone: "", password: "", confirmPassword: "", agreeTerms: false }
+    defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "", agreeTerms: false }
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    // Mock Signup action
-    await new Promise(resolve => setTimeout(resolve, 800));
-    console.log("Register data:", data);
-    
-    toast.success("Tạo tài khoản thành công!", { autoClose: 2000 });
-    router.push("/login");
+    try {
+      await authApi.register({
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+      });
+      
+      toast.success("Tạo tài khoản thành công!", { autoClose: 2000 });
+      router.push("/login");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi đăng ký. Vui lòng thử lại.");
+    }
   };
 
   return (
     <AuthLayout title="Tạo tài khoản NETTECH">
       <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
         
+        {/* Full Name */}
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-gray-700">Họ và tên *</label>
+          <Input 
+            {...register("fullName")}
+            placeholder="Ví dụ: Nguyễn Văn A" 
+            className="h-10 text-sm focus-visible:ring-primary/20"
+          />
+          {errors.fullName && <p className="text-[11px] text-destructive mt-1">{errors.fullName.message}</p>}
+        </div>
+
         {/* Email */}
         <div className="space-y-1">
           <label className="text-xs font-bold text-gray-700">Email *</label>

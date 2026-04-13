@@ -7,7 +7,7 @@ export interface ProductConfig {
 }
 
 export interface DetailedProduct {
-  id: number;
+  id: string | number;
   name: string;
   sku: string;
   availability: "In Stock" | "Out of Stock";
@@ -17,15 +17,7 @@ export interface DetailedProduct {
   images: any[];
   configurations: ProductConfig[];
   features: string[];
-  specs: {
-    cpu: string;
-    ram: string;
-    storage: string;
-    vga: string;
-    display: string;
-    battery: string;
-    weight: string;
-  };
+  specs: Record<string, any>;
   highlights: string[];
 }
 
