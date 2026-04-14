@@ -29,26 +29,15 @@ export const ProductInfo = ({ product }: { product: DetailedProduct }) => {
       const cartItemId = `${product.id}-${activeConfig.id}`;
       const price = product.basePrice + activeConfig.priceDelta;
 
-      // Update backend via API
-      await cartApi.addToCart({
-        userId: user.id,
-        productId: String(product.id),
-        cartItemId,
-        name: product.name,
-        price,
-        image: product.images?.[0] || "",
-        quantity: 1,
-        configName: activeConfig.name,
-        sku: product.sku,
-      });
-
-      // Update local state if backend succeeds
-      addItem({
+      // The store's addItem is now asynchronous and automatically background-syncs via cartApi!
+      await addItem({
         id: product.id,
         cartItemId,
         name: product.name,
         price,
-        image: product.images?.[0] || "",
+        image: typeof product.images?.[0] === "string" 
+                 ? product.images[0] 
+                 : (product.images?.[0] as any)?.src || "",
         quantity: 1,
         configName: activeConfig.name,
         sku: product.sku,
@@ -56,7 +45,7 @@ export const ProductInfo = ({ product }: { product: DetailedProduct }) => {
       
       toast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Lỗi thêm giỏ hàng!");
+      toast.error(error.message || "Lỗi thêm giỏ hàng!");
     } finally {
       setIsAdding(false);
     }

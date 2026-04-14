@@ -13,9 +13,14 @@ function Header() {
   const totalItems = useCartStore((state) => state.getTotalItems());
   const [mounted, setMounted] = useState(false);
 
+  const fetchAndSyncCart = useCartStore((state) => state.fetchAndSyncCart);
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (isLoggedIn && user) {
+      fetchAndSyncCart();
+    }
+  }, [isLoggedIn, user, fetchAndSyncCart]);
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 transition-all md:px-8 lg:px-12 lg:py-6.25 xl:px-16">
