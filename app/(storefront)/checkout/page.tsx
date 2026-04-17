@@ -9,18 +9,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { addressApi, UserAddress } from "@/features/address/api/addressApi";
-import { vietnamProvincesApi, VietnamProvince, VietnamDistrict, VietnamWard } from "@/features/address/api/vietnamProvincesApi";
+import { addressApi, UserAddress } from "@/features/storefront/address/api/addressApi";
+import { vietnamProvincesApi, VietnamProvince, VietnamDistrict, VietnamWard } from "@/features/storefront/address/api/vietnamProvincesApi";
 import { CHECKOUT_FEES } from "@/constants/checkout";
 import {
   checkoutSchema,
   CheckoutFormData,
-} from "@/features/checkout/utils/validation";
+} from "@/features/storefront/checkout/utils/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { Check } from "lucide-react";
-import { AddressModal } from "@/features/address/components/AddressModal";
+import { AddressModal } from "@/features/storefront/address/components/AddressModal";
 
 export default function CheckoutPage() {
   const router = useRouter();

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { cartApi } from "@/features/cart/api/cartApi";
+import { cartApi } from "@/features/storefront/cart/api/cartApi";
 import { useAuthStore } from "./useAuthStore";
 
 export interface CartItem {

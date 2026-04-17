@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
-import { getProducts, getProductById } from "@/features/products/api/productsApi";
+import { getProducts, getProductById } from "@/features/storefront/products/api/productsApi";
 import { ProductList } from "@/components/shared";
 import {
   ProductGallery,
   ProductInfo,
   ProductSpecs,
   ProductHighlights,
-} from "@/features/products/components";
+} from "@/features/storefront/products/components";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;

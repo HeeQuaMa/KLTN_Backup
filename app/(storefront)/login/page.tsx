@@ -10,12 +10,12 @@ import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook, FaApple } from "react-icons/fa";
 
-import { AuthLayout } from "@/components/layout/AuthLayout";
+import { AuthLayout } from "@/components/layouts/storefront/AuthLayout";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { loginSchema, LoginFormData } from "@/features/auth/utils/validation";
-import { authApi } from "@/features/auth/api/authApi";
+import { loginSchema, LoginFormData } from "@/features/shared/auth/utils/validation";
+import { authApi } from "@/features/shared/auth/api/authApi";
 
 export default function LoginPage() {
   const router = useRouter();

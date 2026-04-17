@@ -1,5 +1,5 @@
 import React from "react";
-import { WarrantyList } from "@/features/profile/components";
+import { WarrantyList } from "@/features/storefront/profile/components";
 
 export default function WarrantyPage() {
   return (

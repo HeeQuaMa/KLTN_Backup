@@ -1,5 +1,5 @@
 import React from "react";
-import { OrderList } from "@/features/profile/components";
+import { OrderList } from "@/features/storefront/profile/components";
 
 export default function OrdersPage() {
   return (

@@ -1,5 +1,5 @@
 import React from "react";
-import { ProfileSidebar } from "@/features/profile/components";
+import { ProfileSidebar } from "@/features/storefront/profile/components";
 
 export const metadata = {
   title: "Thông tin cá nhân | NetTech",

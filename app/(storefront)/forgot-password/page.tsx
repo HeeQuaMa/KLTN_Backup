@@ -7,13 +7,13 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 
-import { AuthLayout } from "@/components/layout/AuthLayout";
+import { AuthLayout } from "@/components/layouts/storefront/AuthLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   forgotPasswordSchema,
   ForgotPasswordFormData,
-} from "@/features/auth/utils/validation";
+} from "@/features/shared/auth/utils/validation";
 
 export default function ForgotPasswordPage() {
   const {

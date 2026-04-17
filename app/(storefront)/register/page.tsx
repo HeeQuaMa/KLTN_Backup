@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-toastify";
 
-import { AuthLayout } from "@/components/layout/AuthLayout";
+import { AuthLayout } from "@/components/layouts/storefront/AuthLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { registerSchema, RegisterFormData } from "@/features/auth/utils/validation";
-import { authApi } from "@/features/auth/api/authApi";
+import { registerSchema, RegisterFormData } from "@/features/shared/auth/utils/validation";
+import { authApi } from "@/features/shared/auth/api/authApi";
 
 export default function RegisterPage() {
   const router = useRouter();

@@ -1,5 +1,5 @@
 import React from "react";
-import { BuildPCHeader, BuildPartList, BuildSummarySidebar } from "@/features/build-pc/components";
+import { BuildPCHeader, BuildPartList, BuildSummarySidebar } from "@/features/storefront/build-pc/components";
 
 export const metadata = {
   title: "Xây dựng cấu hình máy tính | NetTech",

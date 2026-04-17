@@ -1,10 +1,10 @@
 import { ProductList } from "@/components/shared";
-import { getProducts } from "@/features/products/api/productsApi";
+import { getProducts } from "@/features/storefront/products/api/productsApi";
 import {
   AiPcBuilderBanner,
   CategoryFilter,
   HeroSection,
-} from "@/features/home/components";
+} from "@/features/storefront/home/components";
 
 const page = async () => {
   const productsList = await getProducts();

@@ -1,5 +1,5 @@
 import React from "react";
-import { ChangePasswordForm } from "@/features/profile/components";
+import { ChangePasswordForm } from "@/features/storefront/profile/components";
 
 export default function ChangePasswordPage() {
   return (

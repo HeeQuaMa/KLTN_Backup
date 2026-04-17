@@ -1,10 +1,10 @@
 import { ProductCard } from "@/components/shared";
-import { getProducts } from "@/features/products/api/productsApi";
+import { getProducts } from "@/features/storefront/products/api/productsApi";
 import {
   ProductSortBar,
   SidebarFilter,
   ProductPagination,
-} from "@/features/products/components";
+} from "@/features/storefront/products/components";
 
 const Products = async () => {
   const products = await getProducts();
