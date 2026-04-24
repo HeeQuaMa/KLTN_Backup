@@ -3,7 +3,7 @@
 import React from "react";
 import { usePathname } from "next/navigation";
 import { Header, Navigation, Footer } from "@/components/layouts/storefront";
-import { ScrollToTop } from "@/components/shared";
+import { ScrollToTop, AIChatBox } from "@/components/shared";
 
 export const SiteLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -22,6 +22,7 @@ export const SiteLayout = ({ children }: { children: React.ReactNode }) => {
       <main className="flex w-full grow flex-col bg-white">{children}</main>
 
       {!isAuthPage && <ScrollToTop />}
+      {!isAuthPage && <AIChatBox />}
       {!isAuthPage && <Footer />}
     </>
   );
