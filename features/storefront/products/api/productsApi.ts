@@ -13,9 +13,9 @@ const categorySlugMap: Record<string, string> = {
   "65af20000000000000000007": "ssd-hdd",
 };
 
-export const getProducts = async (): Promise<Product[]> => {
+export const getProducts = async (params?: { category?: string }): Promise<Product[]> => {
   try {
-    const response = await http.get(`/products`);
+    const response = await http.get(`/products`, { params });
     
     // API backend trả về danh sách trong response.data.products
     const products = response.data.products || [];
@@ -29,7 +29,9 @@ export const getProducts = async (): Promise<Product[]> => {
 
       const price = item.price || item.basePrice || 0;
       
-      const mappedSlug =
+      // Nếu item.category là object (populate), lấy slug từ nó, nếu không dùng categorySlugMap tạm
+      const mappedSlug = 
+        item.category?.slug || 
         categorySlugMap[item.categoryId || item.category] ||
         item.categorySlug ||
         "all";
