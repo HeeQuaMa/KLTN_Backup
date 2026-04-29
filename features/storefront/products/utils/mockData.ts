@@ -1,0 +1,99 @@
+import mockAvt from "@/public/images/pink.jpg";
+
+export interface Product {
+  id: string | number;
+  name: string;
+  specs: string;
+  price: number;
+  originalPrice: number | null;
+  discount: string | null;
+  image: any;
+  categorySlug?: string;
+  brand?: string;
+  totalStock?: number;
+  sku?: string;
+}
+
+export const mockProducts: Product[] = [
+  {
+    id: 1,
+    name: "Dell XPS 13 Plus",
+    specs: "Core i7 / 16GB / 512GB",
+    price: 35990000,
+    originalPrice: 40000000,
+    discount: "-10%",
+    image: mockAvt, // placeholder
+  },
+  {
+    id: 2,
+    name: "Dell Inspiron 16",
+    specs: "Core i5 / 8GB / 512GB",
+    price: 18500000,
+    originalPrice: null,
+    discount: null,
+    image: mockAvt,
+  },
+  {
+    id: 3,
+    name: "Dell Alienware M16",
+    specs: "RTX 4070 / 32GB",
+    price: 45000000,
+    originalPrice: null,
+    discount: null,
+    image: mockAvt,
+  },
+  {
+    id: 4,
+    name: "MacBook Air M2",
+    specs: "Apple M2 / 8GB / 256GB",
+    price: 24000000,
+    originalPrice: 28000000,
+    discount: "-14%",
+    image: mockAvt,
+  },
+  {
+    id: 5,
+    name: "ThinkPad X1 Carbon Gen 11",
+    specs: "Core i7 / 32GB / 1TB",
+    price: 52000000,
+    originalPrice: null,
+    discount: null,
+    image: mockAvt,
+  },
+  {
+    id: 6,
+    name: "ASUS ROG Zephyrus G14",
+    specs: "Ryzen 9 / RTX 4060",
+    price: 38500000,
+    originalPrice: 42000000,
+    discount: "-8%",
+    image: mockAvt,
+  },
+  {
+    id: 7,
+    name: "MSI Katana 15",
+    specs: "Core i7 / RTX 4050",
+    price: 25990000,
+    originalPrice: 29000000,
+    discount: "-10%",
+    image: mockAvt,
+  },
+  {
+    id: 8,
+    name: "Acer Predator Helios Neo 16",
+    specs: "Core i9 / RTX 4070",
+    price: 41000000,
+    originalPrice: null,
+    discount: null,
+    image: mockAvt,
+  },
+  {
+    id: 9,
+    name: "HP Victus 16",
+    specs: "Ryzen 7 / RTX 4060",
+    price: 26500000,
+    originalPrice: null,
+    discount: null,
+    image: mockAvt,
+  },
+];

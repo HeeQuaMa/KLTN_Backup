@@ -1,0 +1,7 @@
+export const PAYMENT_METHODS = ["COD", "VNPAY", "MOMO"] as const;
+
+export const CHECKOUT_FEES = {
+  SHIPPING_FEE: 50000,
+  DISCOUNT: 0,
+  VNPAY_DISCOUNT_AMOUNT: 300000,
+};
