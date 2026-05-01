@@ -4,8 +4,9 @@ import { cartApi } from "@/features/storefront/cart/api/cartApi";
 import { useAuthStore } from "./useAuthStore";
 
 export interface CartItem {
-  id: string | number;
-  cartItemId: string;
+  id: string | number; // ID gốc của sản phẩm
+  cartItemId: string; // ID phân biệt (id + config) trong giỏ
+
   name: string;
   price: number;
   image: string;

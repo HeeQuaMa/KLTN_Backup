@@ -1,7 +1,11 @@
 import React from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 
-export const BuildPCHeader = () => {
+interface BuildPCHeaderProps {
+  hasWarning?: boolean;
+}
+
+export const BuildPCHeader = ({ hasWarning = false }: BuildPCHeaderProps ) => {
   return (
     <div className="flex flex-col gap-4 py-8 md:flex-row md:items-center md:justify-between">
       <div>
@@ -13,9 +17,19 @@ export const BuildPCHeader = () => {
         </p>
       </div>
 
-      <div className="flex h-12 items-center gap-2 rounded-full border-2 border-green-500 bg-white px-6 shadow-sm max-w-max shrink-0">
-        <CheckCircle2 className="h-6 w-6 fill-green-500 text-white" strokeWidth={1} />
-        <span className="font-bold text-green-600">Hệ thống tương thích tốt</span>
+      {/* 👉 2. Dùng điều kiện để đổi màu và text */}
+      <div className="mt-4 md:mt-0">
+        {hasWarning ? (
+          <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-full text-orange-600 font-medium text-[14px]">
+            <AlertTriangle className="w-5 h-5" />
+            <span>Cấu hình có cảnh báo</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full text-green-600 font-medium text-[14px]">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Hệ thống tương thích tốt</span>
+          </div>
+        )}
       </div>
     </div>
   );

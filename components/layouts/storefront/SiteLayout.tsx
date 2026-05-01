@@ -16,8 +16,14 @@ export const SiteLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      {!isAuthPage && <Header />}
-      {!isAuthPage && <Navigation />}
+      {/* isolate + relative + z-[100] ensures the entire header band floats
+          above <main> regardless of what stacking contexts main creates */}
+      {!isAuthPage && (
+        <div className="relative z-[100] isolate">
+          <Header />
+          <Navigation />
+        </div>
+      )}
 
       <main className="flex w-full grow flex-col bg-white">{children}</main>
 

@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 
@@ -60,9 +59,10 @@ export const OrderItem = ({ order }: OrderItemProps) => {
         {order.products.map((product) => (
           <div key={product.id} className="mb-4 flex gap-4 last:mb-0 pb-4 border-b border-gray-100">
             {/* Image placeholder */}
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-gray-100 border border-gray-100 relative">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-gray-100 border border-gray-100 relative flex items-center justify-center">
               {product.imageUrl ? (
-                <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
               ) : null}
             </div>
 

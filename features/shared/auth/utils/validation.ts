@@ -7,20 +7,36 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
-export const registerSchema = z.object({
-  fullName: z.string().min(2, "Họ và tên phải có ít nhất 2 ký tự"),
-  email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
-  phone: z.string().min(10, "SĐT không hợp lệ").regex(/^[0-9]+$/, "SĐT chỉ được chứa chữ số"),
-  password: z.string().min(8, "Mật khẩu phải từ 8-25 ký tự").max(25, "Mật khẩu tối đa 25 ký tự"),
-  confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
-  agreeTerms: z.boolean().default(false).refine((val) => val === true, {
-    message: "Bạn phải đồng ý với Điều khoản",
-  }),
-  subscribe: z.boolean().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Mật khẩu xác nhận không khớp",
-  path: ["confirmPassword"],
-});
+export const registerSchema = z
+  .object({
+    email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
+    fullName: z.string().min(2, "Họ và tên phải có ít nhất 2 ký tự"),
+    phone: z
+      .string()
+      .min(10, "SĐT không hợp lệ")
+      .regex(/^[0-9]+$/, "SĐT chỉ được chứa chữ số"),
+    password: z
+      .string()
+      .min(8, "Mật khẩu phải từ 8-25 ký tự")
+      .max(25, "Mật khẩu tối đa 25 ký tự")
+      // THÊM ĐOẠN NÀY ĐỂ BẮT BUỘC CHỮ HOA, CHỮ THƯỜNG VÀ SỐ:
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+        "Mật khẩu phải bao gồm chữ hoa, chữ thường và số",
+      ),
+    confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
+    agreeTerms: z
+      .boolean()
+      .default(false)
+      .refine((val) => val === true, {
+        message: "Bạn phải đồng ý với Điều khoản",
+      }),
+    subscribe: z.boolean().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
+  });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
 

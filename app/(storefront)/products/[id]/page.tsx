@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getProducts, getProductById } from "@/features/storefront/products/api/productsApi";
+import { mockProductDetail } from "@/features/storefront/products/utils/mockProductDetail";
+import { mockProducts } from "@/features/storefront/products/utils/mockData";
 import { ProductList } from "@/components/shared";
 import {
   ProductGallery,
@@ -15,9 +16,9 @@ interface ProductPageProps {
 const ProductPage = async ({ params }: ProductPageProps) => {
   const { id } = await params;
 
-  // Lấy data chi tiết sản phẩm từ API
-  const product = await getProductById(id);
-  const productsList = await getProducts();
+  // Tạm thời luôn load mock product chi tiết (Asus ROG) cho mọi ID click vào để demo UI
+  // Sau này sẽ tích hợp API fetch data dựa trên id
+  const product = mockProductDetail;
 
   if (!product) {
     notFound();
@@ -25,9 +26,6 @@ const ProductPage = async ({ params }: ProductPageProps) => {
 
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-6 md:px-8 lg:px-12 xl:px-16 lg:py-10 flex-1">
-      {/* Breadcrumb (Placeholder) */}
-      
-
       {/* Khối Trên (Top Section) */}
       <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-12 xl:gap-16">
         <div className="w-full lg:w-[45%] xl:w-1/2">
@@ -49,7 +47,7 @@ const ProductPage = async ({ params }: ProductPageProps) => {
       </div>
 
       <div className="mt-16 w-full">
-        <ProductList title="SẢN PHẨM TƯƠNG TỰ" products={productsList.slice(0, 5)} />
+        <ProductList title="SẢN PHẨM TƯƠNG TỰ" products={mockProducts.slice(0, 5)} />
       </div>
     </main>
   );

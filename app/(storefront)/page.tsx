@@ -1,36 +1,23 @@
-import { ProductList } from "@/components/shared";
-import { getProducts } from "@/features/storefront/products/api/productsApi";
-import {
-  AiPcBuilderBanner,
-  CategoryFilter,
-  HeroSection,
-} from "@/features/storefront/home/components";
+import { HeroSection, CategoryFilter, AiPcBuilderBanner } from "@/features/storefront/home/components";
+import { product } from "@/features/storefront/home/utils/product";
+import ProductCard from "@/components/shared/ProductCard";
 
-const page = async () => {
-  const productsList = await getProducts();
-  
-  // Tạm chia danh sách lấy được từ API:
-  // - Lấy 4 sản phẩm đầu tiên cho Sản phẩm nổi bật
-  const featuredProducts = productsList.slice(0, 4);
-
-  // - Lấy các sản phẩm thuộc linh kiện PC
-  const pcComponentsSlugs = ["cpu", "vga", "mainboard", "ram", "ssd-hdd", "psu-case"];
-  const pcComponents = productsList
-    .filter((p) => pcComponentsSlugs.includes(p.categorySlug))
-    .slice(0, 4);
-
-  // Nếu API chưa đủ linh kiện PC, fallback dùng tạm 4 cái cuối trong list
-  const finalBuildPcProducts = pcComponents.length > 0 ? pcComponents : productsList.slice(-4).reverse();
-
+export default function HomePage() {
   return (
-    <main className="px-4 py-4 md:px-8 md:py-6 lg:px-12 xl:px-16 lg:py-7.5">
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-6 md:px-8 lg:px-12 xl:px-16 lg:py-10 flex-1">
       <HeroSection />
       <CategoryFilter />
-      <ProductList title="Sản phẩm nổi bật" products={featuredProducts} />
-      <ProductList title="Linh kiện build PC" products={finalBuildPcProducts} />
+
+      <section className="mt-8 lg:mt-10">
+        <h2 className="mb-6 text-2xl font-bold text-gray-900">Sản phẩm nổi bật</h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:gap-6">
+          {product.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </section>
+
       <AiPcBuilderBanner />
     </main>
   );
-};
-
-export default page;
+}
