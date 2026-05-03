@@ -33,6 +33,7 @@ export interface Product {
   name?: string;
   brand?: string;
   price?: number;
+  importPrice?: number;
   specifications?: ProductSpecifications;
   // category có thể là ObjectId string HOẶC object được populate
   category?: string | ProductCategory | null;
@@ -113,6 +114,60 @@ export const getProducts = async (
  */
 export const getProductById = async (id: string): Promise<ProductDetail> => {
   const response = await http.get<ProductDetail>(`/products/${id}`);
+  return response.data;
+};
+
+/**
+ * Tạo sản phẩm kèm ảnh → POST /products (multipart/form-data).
+ */
+export interface CreateProductWithImagesPayload {
+  name: string;
+  sku: string;
+  brand?: string;
+  categorySlug: string;
+  description?: string;
+  price: number;
+  importPrice?: number;
+  totalStock?: number;
+  specifications?: ProductSpecifications;
+}
+
+export async function createProductWithImages(
+  payload: CreateProductWithImagesPayload,
+  imageFiles: File[],
+): Promise<Product> {
+  const fd = new FormData();
+  fd.append("name", payload.name);
+  fd.append("sku", payload.sku);
+  if (payload.brand?.trim()) fd.append("brand", payload.brand.trim());
+  fd.append("categorySlug", payload.categorySlug);
+  if (payload.description?.trim()) {
+    fd.append("description", payload.description.trim());
+  }
+  fd.append("price", String(payload.price));
+  if (payload.importPrice !== undefined && payload.importPrice !== null) {
+    fd.append("importPrice", String(payload.importPrice));
+  }
+  fd.append("totalStock", String(payload.totalStock ?? 0));
+  const specs = payload.specifications;
+  if (specs && Object.keys(specs).length > 0) {
+    fd.append("specifications", JSON.stringify(specs));
+  }
+  imageFiles.forEach((f) => fd.append("images", f));
+
+  const response = await http.post<Product>("/products", fd);
+  return response.data;
+}
+
+/** GET /categories — dropdown khi tạo SP. */
+export interface CategoryOption {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
+export const getCategories = async (): Promise<CategoryOption[]> => {
+  const response = await http.get<CategoryOption[]>("/categories");
   return response.data;
 };
 

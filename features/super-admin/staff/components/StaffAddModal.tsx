@@ -137,7 +137,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
@@ -190,11 +190,11 @@ export function StaffAddModal({ isOpen, onClose, editData }: StaffAddModalProps)
     try {
       if (editData) {
         // CHẾ ĐỘ SỬA: Dùng PATCH và truyền ID vào URL
-        await axios.patch(`http://localhost:3001/users/${editData._id}`, formData);
+        await axiosInstance.patch(`/users/${editData._id}`, formData);
         alert("Cập nhật nhân viên thành công!");
       } else {
         // CHẾ ĐỘ THÊM: Dùng POST
-        await axios.post(`http://localhost:3001/users`, formData);
+        await axiosInstance.post(`/users`, formData);
         alert("Thêm nhân viên thành công!");
       }
       

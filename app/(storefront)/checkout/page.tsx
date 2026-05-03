@@ -10,7 +10,12 @@ import { toast } from "react-toastify";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useCart } from "@/features/storefront/cart/context/CartContext";
-import { createOrder, mapCartItemsToOrderItems, hasMockItems } from "@/lib/api/orderApi";
+import {
+  createOrder,
+  mapCartItemsToOrderItems,
+  hasMockItems,
+  markMyOrdersStale,
+} from "@/lib/api/orderApi";
 import { addressApi, UserAddress } from "@/features/storefront/address/api/addressApi";
 import { vietnamProvincesApi, VietnamProvince, VietnamDistrict, VietnamWard } from "@/features/storefront/address/api/vietnamProvincesApi";
 import { CHECKOUT_FEES } from "@/constants/checkout";
@@ -151,8 +156,6 @@ export default function CheckoutPage() {
       addressApi.getSavedAddresses().then(setSavedAddresses);
     }
 
-    const userId = useAuthStore.getState().user?.id ?? useAuthStore.getState().user?.id ?? "";
-
     let generatedOrderId = `#NT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     // Cảnh báo nếu giỏ hàng có sản phẩm demo (ID không phải MongoDB ObjectId)
@@ -165,13 +168,13 @@ export default function CheckoutPage() {
 
     const realItems = mapCartItemsToOrderItems(items);
 
-    // Chỉ gọi API nếu giỏ hàng có ít nhất 1 sản phẩm thật
-    if (realItems.length > 0 && userId) {
+    // Có sản phẩm thật: lưu đơn qua API (user từ JWT; BE bỏ qua userId trong body).
+    if (realItems.length > 0) {
       try {
         const result = await createOrder({
-          userId,
           items: realItems,
           totalAmount: finalPrice,
+          channel: "ONLINE",
           customerInfo: {
             fullName: data.fullName,
             phone: data.phone,
@@ -183,9 +186,21 @@ export default function CheckoutPage() {
             paymentMethod: data.paymentMethod as "COD" | "VNPAY" | "MOMO",
           },
         });
-        if (result._id) generatedOrderId = result._id;
-      } catch {
-        // Backend lỗi → vẫn cho phép đặt hàng thành công trên FE (graceful degradation)
+        const code =
+          result.orderCode != null && String(result.orderCode).length > 0
+            ? String(result.orderCode)
+            : String(result._id ?? "");
+        if (code) {
+          generatedOrderId = code.startsWith("#") ? code : `#${code}`;
+        }
+        markMyOrdersStale();
+      } catch (err) {
+        console.error("createOrder:", err);
+        toast.error(
+          "Không lưu được đơn hàng. Vui lòng kiểm tra đăng nhập và thử lại.",
+          { autoClose: 4000 },
+        );
+        return;
       }
     }
 

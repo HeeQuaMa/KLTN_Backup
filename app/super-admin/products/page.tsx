@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Package, AlertTriangle, Settings, Check } from "lucide-react";
+import { Package, AlertTriangle, Settings } from "lucide-react";
 import { toast } from "react-toastify";
 
 // Import API và các Interface chuẩn từ lib/api
@@ -14,7 +14,11 @@ import { ProductFilterBar } from "@/features/super-admin/products/components/Pro
 import { ProductTable } from "@/features/super-admin/products/components/ProductTable";
 import { AddProductCard } from "@/features/super-admin/products/components/AddProductCard";
 
+/** Giống storefront cũ (productsApi mặc định limit 300) — admin cần xem danh sách dài. */
+const SUPER_ADMIN_PRODUCTS_LIMIT = 300;
+
 export default function SuperAdminProductsPage() {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // 1. Quản lý State dữ liệu
@@ -39,8 +43,11 @@ export default function SuperAdminProductsPage() {
         category,
         brand,
         // Chuyển đổi isActive từ string URL sang boolean nếu cần
-        isActive: isActive === "all" ? undefined : isActive === "true",
-        limit: 10,
+        isActive:
+          !isActive || isActive === "all"
+            ? undefined
+            : isActive === "true",
+        limit: SUPER_ADMIN_PRODUCTS_LIMIT,
       });
 
       // Lưu ý: Backend trả về format { products, pagination }
@@ -107,8 +114,45 @@ export default function SuperAdminProductsPage() {
 
       {/* Table - Nhận data thực và hiển thị */}
       <ProductTable data={products} isLoading={loading} />
-      
-      {/* TODO: Thêm component Pagination ở đây nếu muốn phân trang đẹp */}
+
+      {pagination && pagination.pages > 1 && (
+        <div className="flex flex-wrap items-center justify-center gap-4 rounded-xl border border-slate-100 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+          <Link
+            href={`${pathname}?${(() => {
+              const p = new URLSearchParams(searchParams.toString());
+              p.set("page", String(Math.max(1, page - 1)));
+              return p.toString();
+            })()}`}
+            className={`font-semibold ${
+              page <= 1
+                ? "pointer-events-none text-slate-300"
+                : "text-blue-600 hover:underline"
+            }`}
+            aria-disabled={page <= 1}
+          >
+            ← Trang trước
+          </Link>
+          <span>
+            Trang <strong>{pagination.page}</strong> / {pagination.pages} (hiển thị{" "}
+            {products.length} / {pagination.total} sản phẩm)
+          </span>
+          <Link
+            href={`${pathname}?${(() => {
+              const p = new URLSearchParams(searchParams.toString());
+              p.set("page", String(Math.min(pagination.pages, page + 1)));
+              return p.toString();
+            })()}`}
+            className={`font-semibold ${
+              page >= pagination.pages
+                ? "pointer-events-none text-slate-300"
+                : "text-blue-600 hover:underline"
+            }`}
+            aria-disabled={page >= pagination.pages}
+          >
+            Trang sau →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

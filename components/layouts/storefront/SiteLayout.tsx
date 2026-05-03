@@ -16,8 +16,8 @@ export const SiteLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      {/* isolate + relative + z-[100] ensures the entire header band floats
-          above <main> regardless of what stacking contexts main creates */}
+      {/* isolate + z-[100]: header row uses z-[10000] so account dropdown stays
+          above the blue Navigation bar (nav is z-10); both sit above <main>. */}
       {!isAuthPage && (
         <div className="relative z-[100] isolate">
           <Header />

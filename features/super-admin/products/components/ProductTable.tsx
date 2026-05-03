@@ -14,7 +14,7 @@ interface ProductTableProps {
 
 export function ProductTable({ data, isLoading }: ProductTableProps) {
   return (
-    <div className="relative min-h-[400px] overflow-hidden rounded-xl bg-white shadow-sm">
+    <div className="relative min-h-[400px] rounded-xl bg-white shadow-sm">
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />

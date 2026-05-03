@@ -136,7 +136,7 @@ import { Pencil, Lock, Unlock } from "lucide-react"; // Thêm icon Unlock cho đ
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance";
 import { StaffAddModal } from "./StaffAddModal"; // BỔ SUNG IMPORT NÀY
 
 const getInitials = (name: string) => {
@@ -164,8 +164,10 @@ export function StaffTable({ onOpenEdit }: StaffTableProps) {
       setLoading(true);
       try {
         const queryString = searchParams.toString();
-        const res = await axios.get(`http://localhost:3001/users/staff/list?${queryString}`);
-        
+        const res = await axiosInstance.get(
+          `/users/staff/list${queryString ? `?${queryString}` : ""}`,
+        );
+
         if (res.data && res.data.success) {
           setStaffs(res.data.data);
         }
@@ -194,7 +196,7 @@ export function StaffTable({ onOpenEdit }: StaffTableProps) {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      await axios.patch(`http://localhost:3001/users/${id}/toggle-lock`);
+      await axiosInstance.patch(`/users/${id}/toggle-lock`);
       alert(isDeleted ? "Mở khóa thành công!" : "Đã khóa tài khoản!");
       window.location.reload(); // Tải lại trang để cập nhật UI
     } catch (error) {

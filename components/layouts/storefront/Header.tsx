@@ -39,7 +39,7 @@ function Header() {
         .toUpperCase()
     : "U";
   return (
-    <header className="relative z-[100] flex flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8 lg:px-12 lg:py-6.25 xl:px-16">
+    <header className="relative z-[10000] flex flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8 lg:px-12 lg:py-6.25 xl:px-16">
       {/* Logo */}
       <div className="text-xl font-bold md:text-2xl lg:text-[32px]">
         <Link href={"/"}>
@@ -120,7 +120,7 @@ function Header() {
 
               {/* Dropdown menu */}
               {dropdownOpen && (
-                <div className="absolute top-full right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg">
+                <div className="absolute top-full right-0 z-[10050] mt-2 w-44 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg">
                   <div className="border-b border-gray-100 px-4 py-2.5">
                     <p className="text-xs font-semibold text-gray-500">
                       Đã đăng nhập

@@ -4,10 +4,7 @@ import { LoginFormData, RegisterFormData } from "@/features/shared/auth/utils/va
 
 export const loginApi = async (data: LoginFormData) => {
   const response = await axiosInstance.post("/auth/login", {
-    // Lưu ý chỗ này: Zod của bạn ghi là emailOrPhone,
-    // nhưng backend NestJS nãy mình code đang nhận biến tên là "email".
-    // Nên mình map nó lại cho khớp backend nhé:
-    email: data.emailOrPhone,
+    emailOrPhone: data.emailOrPhone,
     password: data.password,
   });
   return response.data;

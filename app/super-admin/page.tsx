@@ -1,76 +1,160 @@
 "use client";
 
-import { DollarSign, Package, User, AlertTriangle } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { DollarSign, Package, User, AlertTriangle, Loader2 } from "lucide-react";
+import { toast } from "react-toastify";
 import { StatCard } from "@/features/super-admin/shared/components/StatCard";
 import { DashboardChart } from "@/features/super-admin/dashboard/components/DashboardChart";
 import { TopProducts } from "@/features/super-admin/dashboard/components/TopProducts";
 import { RecentOrders } from "@/features/super-admin/dashboard/components/RecentOrders";
+import {
+  fetchDashboardStats,
+  fetchRevenueChart,
+  fetchTopProducts,
+  fetchRecentOrders,
+  type DashboardStats,
+  type RevenueChartWeek,
+  type TopProductRow,
+  type RecentOrderRow,
+} from "@/lib/api/dashboardApi";
+import {
+  buildMonthOptions,
+  formatDashboardMoney,
+} from "@/features/super-admin/dashboard/utils/format";
 
 export default function SuperAdminPage() {
+  const monthOptions = useMemo(() => buildMonthOptions(18), []);
+  const [sel, setSel] = useState(() => monthOptions[0] ?? { year: 2026, month: 1, label: "" });
+
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [chartWeeks, setChartWeeks] = useState<RevenueChartWeek[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProductRow[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrderRow[]>([]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [s, c, t, r] = await Promise.all([
+        fetchDashboardStats(sel.year, sel.month),
+        fetchRevenueChart(sel.year, sel.month),
+        fetchTopProducts(sel.year, sel.month),
+        fetchRecentOrders(sel.year, sel.month),
+      ]);
+      setStats(s);
+      setChartWeeks(c.weeks);
+      setTopProducts(t);
+      setRecentOrders(r);
+    } catch (e: unknown) {
+      console.error(e);
+      toast.error("Không tải được dashboard. Bạn đã đăng nhập quản trị (Super Admin) chưa?");
+      setStats(null);
+      setChartWeeks([]);
+      setTopProducts([]);
+      setRecentOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [sel.year, sel.month]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const growthTrend = (pct: number): "up" | "down" =>
+    pct >= 0 ? "up" : "down";
+
   return (
     <div className="flex flex-col gap-6 p-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800">
           Báo cáo doanh thu toàn hệ thống
         </h1>
-        <div className="flex items-center">
-          <select className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-            <option>Tháng này: 01/2026</option>
-            <option>Tháng trước: 12/2025</option>
+        <div className="flex items-center gap-2">
+          {loading && (
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" aria-hidden />
+          )}
+          <select
+            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={`${sel.year}-${sel.month}`}
+            onChange={(e) => {
+              const opt = monthOptions.find(
+                (o) => `${o.year}-${o.month}` === e.target.value,
+              );
+              if (opt) setSel(opt);
+            }}
+          >
+            {monthOptions.map((o) => (
+              <option key={`${o.year}-${o.month}`} value={`${o.year}-${o.month}`}>
+                {o.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
-      {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="DOANH THU TỔNG"
-          value="1.2 Tỷ"
-          trend="up"
-          trendText="12% so với tháng trước"
+          value={stats ? formatDashboardMoney(stats.totalRevenue) : "—"}
+          trend={stats ? growthTrend(stats.totalRevenueGrowthPercent) : "none"}
+          trendText={
+            stats
+              ? `${Math.abs(stats.totalRevenueGrowthPercent)}% so với tháng trước`
+              : undefined
+          }
           icon={<DollarSign className="h-4 w-4" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
         />
         <StatCard
           title="TỔNG ĐƠN HÀNG"
-          value="850"
-          trend="up"
-          trendText="5% so với tháng trước"
+          value={stats ? String(stats.totalOrders) : "—"}
+          trend={stats ? growthTrend(stats.totalOrdersGrowthPercent) : "none"}
+          trendText={
+            stats
+              ? `${Math.abs(stats.totalOrdersGrowthPercent)}% so với tháng trước`
+              : undefined
+          }
           icon={<Package className="h-4 w-4" />}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
         />
         <StatCard
           title="KHÁCH HÀNG MỚI"
-          value="120"
-          trend="down"
-          trendText="2% so với tháng trước"
+          value={stats ? String(stats.newCustomers) : "—"}
+          trend={stats ? growthTrend(stats.newCustomersGrowthPercent) : "none"}
+          trendText={
+            stats
+              ? `${Math.abs(stats.newCustomersGrowthPercent)}% so với tháng trước`
+              : undefined
+          }
           icon={<User className="h-4 w-4" />}
           iconBgColor="bg-slate-100"
           iconColor="text-slate-600"
         />
         <StatCard
           title="SẢN PHẨM SẮP HẾT"
-          value="15"
+          value={stats ? String(stats.lowStockProducts) : "—"}
           trend="none"
-          trendText="Cần nhập kho ngay"
+          trendText={
+            stats
+              ? `Ngưỡng < ${stats.lowStockThreshold} — Cần nhập kho ngay`
+              : undefined
+          }
           icon={<AlertTriangle className="h-4 w-4" />}
           iconBgColor="bg-red-100"
           iconColor="text-red-600"
         />
       </div>
 
-      {/* Chart & Top Products */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-        <DashboardChart />
-        <TopProducts />
+        <DashboardChart weeks={chartWeeks} />
+        <TopProducts products={topProducts} />
       </div>
 
-      {/* Recent Orders */}
       <div className="grid grid-cols-1 gap-6">
-        <RecentOrders />
+        <RecentOrders orders={recentOrders} />
       </div>
     </div>
   );
