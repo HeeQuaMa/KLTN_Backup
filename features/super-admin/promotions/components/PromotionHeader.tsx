@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CreateVoucherModal } from "./CreateVoucherModal";
 
-export function PromotionHeader() {
+interface PromotionHeaderProps {
+  refreshData: () => void;
+}
+
+export function PromotionHeader({ refreshData }: PromotionHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -26,6 +30,7 @@ export function PromotionHeader() {
       <CreateVoucherModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
+        onSuccess={refreshData}
       />
     </>
   );
