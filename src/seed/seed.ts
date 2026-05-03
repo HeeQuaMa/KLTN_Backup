@@ -5,6 +5,7 @@
  * Cách chạy:
  *   cd backend-nettech
  *   pnpm ts-node -r tsconfig-paths/register src/seed/seed.ts
+ *   pnpm seed:dashboard  — đơn hàng mẫu cho Dashboard (~50 COMPLETED, xem src/seed/seed-dashboard.ts)
  *
  * Script sẽ:
  *   1. Kết nối MongoDB Atlas (đọc từ .env)
@@ -17,6 +18,7 @@ import 'reflect-metadata';
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import * as bcrypt from 'bcrypt';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -38,6 +40,7 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true },
     brand: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
+    importPrice: { type: Number, min: 0 },
     specifications: { type: Object },
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     totalStock: { type: Number, default: 0 },
@@ -51,6 +54,50 @@ const productSchema = new mongoose.Schema(
 
 const CategoryModel = mongoose.model('SeedCategory', categorySchema, 'categories');
 const ProductModel = mongoose.model('SeedProduct', productSchema, 'products');
+
+/** Đồng bộ user demo lịch sử đơn (cùng DB với Nest). Chạy `pnpm seed` sau khi pull. */
+async function seedDemoOrdersUser() {
+  const DEMO_EMAIL = 'demo.orders@nettech.vn';
+  const DEMO_PASSWORD = 'Nettech123!';
+  const pwdHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+
+  const looseSchema = new mongoose.Schema(
+    {},
+    { strict: false, collection: 'users' },
+  );
+  const Users =
+    mongoose.models._NettechDemoOrdersUser ||
+    mongoose.model('_NettechDemoOrdersUser', looseSchema);
+
+  const existing = await Users.findOne({ email: DEMO_EMAIL }).lean();
+  if (existing) {
+    await Users.updateOne(
+      { email: DEMO_EMAIL },
+      {
+        $set: {
+          password: pwdHash,
+          fullName: 'Khách Demo NetTech',
+          isDeleted: false,
+          role: 'CUSTOMER',
+        },
+      },
+    );
+  } else {
+    await Users.create({
+      email: DEMO_EMAIL,
+      password: pwdHash,
+      fullName: 'Khách Demo NetTech',
+      role: 'CUSTOMER',
+      isDeleted: false,
+      tier: 'Member',
+      totalSpent: 0,
+    });
+  }
+
+  console.log(
+    `\n👤  Đã đồng bộ tài khoản demo: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`,
+  );
+}
 
 // ─── Category Definitions ─────────────────────────────────────────────────────
 
@@ -2584,7 +2631,10 @@ async function main() {
 
   // 3. Insert sản phẩm mới -----------------------------------------------------
   console.log('\n📦  Đang thêm sản phẩm mới...');
-  const products = makeProducts(catIds);
+  const products = makeProducts(catIds).map((p) => ({
+    ...p,
+    importPrice: Math.round(p.price * 0.75),
+  }));
   const inserted = await ProductModel.insertMany(products, { ordered: false });
   console.log(`   ✅  Đã thêm thành công ${inserted.length} sản phẩm!\n`);
 
@@ -2611,6 +2661,8 @@ async function main() {
     '   Case     : Lian Li O11D EVO XL        (ATX ✔, GPU<420mm ✔, Cooler<167mm ✔)\n' +
     '   SSD      : Samsung 990 Pro 2TB\n',
   );
+
+  await seedDemoOrdersUser();
 
   await mongoose.disconnect();
   console.log('🔌  Đã ngắt kết nối. Seed hoàn tất!');

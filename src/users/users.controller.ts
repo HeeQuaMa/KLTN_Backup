@@ -13,6 +13,7 @@ import {
 import { UsersService } from './users.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoginDto, RegisterDto } from './dto/auth-credentials.dto';
 import { AuthGuard } from './guards/auth.guard';
 
 @ApiTags('Quản lý User & Auth')
@@ -26,13 +27,13 @@ export class UsersController {
 
   @Post('auth/register')
   @ApiOperation({ summary: 'Đăng ký tài khoản mới' })
-  async register(@Body() userData: any) {
+  async register(@Body() userData: RegisterDto) {
     return await this.usersService.register(userData);
   }
 
   @Post('auth/login')
   @ApiOperation({ summary: 'Đăng nhập hệ thống' })
-  async login(@Body() loginData: any) {
+  async login(@Body() loginData: LoginDto) {
     return await this.usersService.login(loginData);
   }
 

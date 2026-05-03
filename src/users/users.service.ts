@@ -7,6 +7,7 @@ import {
 import { UsersRepository } from './users.repository';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'; // Import bcrypt
+import type { LoginDto, RegisterDto } from './dto/auth-credentials.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,28 +19,41 @@ export class UsersService {
   // ========================================================
   // 1. PHẦN AUTH CỦA PARTNER (GIỮ NGUYÊN KHÔNG CHẠM VÀO)
   // ========================================================
-  async register(userData: any) {
+  async register(userData: RegisterDto) {
     const exists = await this.userRepository.findByEmail(userData.email);
     if (exists) throw new ConflictException('Email đã tồn tại!');
+
+    const phoneTaken = await this.userRepository.findByEmailOrPhoneWithPassword(
+      userData.phone,
+    );
+    if (phoneTaken) {
+      throw new ConflictException('Số điện thoại đã được sử dụng!');
+    }
 
     // Mã hóa mật khẩu trước khi lưu
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(userData.password, saltOrRounds);
 
-    // Ghi đè password gốc bằng password đã hash
-    const newUserInfo = { ...userData, password: hashedPassword };
+    const newUserInfo = {
+      email: userData.email,
+      fullName: userData.fullName,
+      phone: userData.phone,
+      password: hashedPassword,
+    };
 
     return await this.userRepository.create(newUserInfo);
   }
 
-  async login(loginData: any) {
-    // Sửa chỗ này: Lấy đúng tên biến emailOrPhone từ Frontend gửi lên
-    // const { emailOrPhone, password } = loginData;
-    // Lấy email nếu có, không thì lấy emailOrPhone. Có cái nào dùng cái đó!
-    const identifier = loginData.email || loginData.emailOrPhone;
+  async login(loginData: LoginDto) {
+    const identifier = String(
+      loginData.email ??
+        loginData.emailOrPhone ??
+        loginData.phone ??
+        loginData.username ??
+        '',
+    ).trim();
     const password = loginData.password;
 
-    // Sau đó dùng identifier để tìm user
     const user =
       await this.userRepository.findByEmailOrPhoneWithPassword(identifier);
 
@@ -47,10 +61,12 @@ export class UsersService {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng!');
     }
 
-    const isPasswordMatching = await bcrypt.compare(
-      password,
-      (user as any).password,
-    );
+    const stored = (user as { password?: string }).password ?? '';
+    /** bcrypt hash bắt đầu bằng $2a/$2b/$2y; DB cũ có thể còn mật khẩu thường */
+    const looksBcrypt = /^\$2[aby]\$\d{2}\$/.test(stored);
+    const isPasswordMatching = looksBcrypt
+      ? await bcrypt.compare(password, stored)
+      : stored === password;
 
     if (!isPasswordMatching) {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng!');
@@ -215,14 +231,15 @@ export class UsersService {
     };
   }
 
-  // Hàm toggleLock của bạn viết chuẩn rồi, giữ nguyên nhé!
   async toggleLock(id: string) {
     // 1. Dùng hàm mới để TÌM ĐƯỢC cả những người đã khóa
     const user = await this.userRepository.findByIdWithDeleted(id);
-    
+
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
     // 2. Dùng hàm mới để CẬP NHẬT ĐƯỢC trạng thái
-    return await this.userRepository.updateWithDeleted(id, { isDeleted: !user.isDeleted });
+    return await this.userRepository.updateWithDeleted(id, {
+      isDeleted: !user.isDeleted,
+    });
   }
 }

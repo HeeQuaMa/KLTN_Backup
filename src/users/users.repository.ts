@@ -23,7 +23,11 @@ export class UsersRepository {
   async findByEmailOrPhoneWithPassword(identifier: string) {
     return await this.userModel
       .findOne({
-        $or: [{ email: identifier }, { phone: identifier }],
+        $or: [
+          { email: identifier },
+          { phone: identifier },
+          { username: identifier },
+        ],
         isDeleted: { $ne: true }, // Dùng $ne true để lách luật nếu DB chưa có trường này
       })
       .select('+password') // Ép lấy mật khẩu ra để so sánh
@@ -91,7 +95,7 @@ export class UsersRepository {
 
   async findStaffList(filter: any) {
     const finalFilter: any = {};
-    
+
     // 1. XỬ LÝ LỌC THEO VAI TRÒ (Và chặn Customer)
     if (filter.role) {
       finalFilter.role = filter.role; // Nếu user có chọn role cụ thể (VD: Store Manager)
@@ -111,18 +115,21 @@ export class UsersRepository {
     if (filter.keyword) {
       finalFilter.$or = [
         { fullName: { $regex: filter.keyword, $options: 'i' } }, // $options: 'i' để không phân biệt hoa thường
-        { email: { $regex: filter.keyword, $options: 'i' } }
+        { email: { $regex: filter.keyword, $options: 'i' } },
       ];
+    }
+
+    if (filter.branchId) {
+      finalFilter.branchId = filter.branchId;
     }
 
     // 4. Gọi DB
     return await this.userModel
       .find(finalFilter)
-      .populate('branchId', 'name') 
+      .populate('branchId', 'name')
       .sort({ createdAt: -1 })
       .exec();
   }
-
 
   // 1. Tìm user bất chấp trạng thái (Để lấy ra được người đã bị khóa)
   async findByIdWithDeleted(id: string) {

@@ -22,6 +22,10 @@ export class User extends Document {
   @Prop({ required: true, unique: true })
   email: string;
 
+  /** Đăng nhập admin / legacy (vd. admin_nettech) */
+  @Prop({ unique: true, sparse: true })
+  username?: string;
+
   @Prop({ required: true, select: false })
   password: string;
 
