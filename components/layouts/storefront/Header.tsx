@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,84 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
+
+/** Cần tách + bọc Suspense vì `useSearchParams` bắt buộc khi prerender (Next 16). */
+function HeaderSearchBar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Giữ ô tìm kiếm đồng bộ với ?search= trên trang danh sách sản phẩm
+  useEffect(() => {
+    if (pathname !== "/products") return;
+    setSearchQuery(searchParams.get("search") ?? "");
+  }, [pathname, searchParams]);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (pathname === "/products") {
+      const params = new URLSearchParams(searchParams.toString());
+      if (q) params.set("search", q);
+      else params.delete("search");
+      const qs = params.toString();
+      router.push(qs ? `/products?${qs}` : "/products");
+    } else if (q) {
+      router.push(`/products?search=${encodeURIComponent(q)}`);
+    } else {
+      router.push("/products");
+    }
+  };
+
+  return (
+    <form
+      onSubmit={submitSearch}
+      className="order-last flex h-10 w-full lg:order-0 lg:h-12.5 lg:w-auto"
+    >
+      <Input
+        type="search"
+        name="search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Tìm kiếm linh kiện, Laptop, VGA..."
+        className={cn("h-full flex-1 lg:w-150")}
+        autoComplete="off"
+      />
+      <Button
+        type="submit"
+        className={cn(
+          "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
+        )}
+      >
+        Search
+      </Button>
+    </form>
+  );
+}
+
+function HeaderSearchFallback() {
+  return (
+    <div className="order-last flex h-10 w-full lg:order-0 lg:h-12.5 lg:w-auto">
+      <Input
+        readOnly
+        placeholder="Tìm kiếm linh kiện, Laptop, VGA..."
+        className={cn("h-full flex-1 lg:w-150")}
+      />
+      <Button
+        type="button"
+        disabled
+        className={cn(
+          "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
+        )}
+      >
+        Search
+      </Button>
+    </div>
+  );
+}
 
 function Header() {
   const totalItems = useCartStore((state) => state.getTotalItems());
@@ -48,20 +124,9 @@ function Header() {
       </div>
 
       {/* Search */}
-      <div className="order-last flex h-10 w-full lg:order-0 lg:h-12.5 lg:w-auto">
-        <Input
-          type="search"
-          placeholder="Tìm kiếm linh kiện, Laptop, VGA..."
-          className={cn("h-full flex-1 lg:w-150")}
-        />
-        <Button
-          className={cn(
-            "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
-          )}
-        >
-          Search
-        </Button>
-      </div>
+      <Suspense fallback={<HeaderSearchFallback />}>
+        <HeaderSearchBar />
+      </Suspense>
 
       {/* Right: Cart + Auth */}
       <div className="flex items-center gap-4">
