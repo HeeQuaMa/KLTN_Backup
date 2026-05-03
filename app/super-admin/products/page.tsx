@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Package, AlertTriangle, Settings } from "lucide-react";
@@ -17,7 +17,7 @@ import { AddProductCard } from "@/features/super-admin/products/components/AddPr
 /** Giống storefront cũ (productsApi mặc định limit 300) — admin cần xem danh sách dài. */
 const SUPER_ADMIN_PRODUCTS_LIMIT = 300;
 
-export default function SuperAdminProductsPage() {
+function SuperAdminProductsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -154,5 +154,13 @@ export default function SuperAdminProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SuperAdminProductsPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Đang tải...</div>}>
+      <SuperAdminProductsContent />
+    </Suspense>
   );
 }

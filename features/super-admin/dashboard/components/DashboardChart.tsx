@@ -70,8 +70,8 @@ export function DashboardChart({
               />
               <Tooltip
                 cursor={{ fill: "transparent" }}
-                formatter={(value: number) => [
-                  `${Number(value).toLocaleString("vi-VN")} đ`,
+                formatter={(value) => [
+                  `${Number(value ?? 0).toLocaleString("vi-VN")} đ`,
                   "",
                 ]}
                 contentStyle={{

@@ -3,15 +3,10 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
-// Ảnh bo mạch chủ chất lượng cao (confirmed từ seed.ts)
-const PC_BUILD_IMAGE =
-  "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=900&auto=format&fit=crop";
-
 const AiPcBuilderBanner = () => {
   return (
-    <section className="mt-8 mb-8 w-full overflow-hidden rounded-2xl bg-background-third px-4 py-8 text-white lg:mt-10 lg:min-h-75 lg:px-14 lg:py-10">
+    <section className="mt-8 mb-8 w-full rounded-2xl bg-background-third px-4 py-8 text-white lg:mt-10 lg:min-h-75 lg:px-14 lg:py-10">
       <div className="mx-0 flex flex-col gap-8 sm:mx-4 lg:mx-8 lg:flex-row lg:items-center lg:justify-between xl:gap-12">
-        {/* Text content */}
         <div className="max-w-150 flex-1">
           <p className="text-sm font-semibold tracking-wide text-text-highlight uppercase lg:text-lg">
             TÍNH NĂNG ĐỘC QUYỀN
@@ -33,14 +28,13 @@ const AiPcBuilderBanner = () => {
           </Link>
         </div>
 
-        {/* Banner image with hover scale */}
-        <div className="w-full max-w-125 shrink-0 overflow-hidden rounded-2xl lg:mt-0 lg:w-[45%]">
+        <div className="w-full max-w-125 shrink-0 rounded-2xl lg:mt-0 lg:w-[45%]">
           <Image
-            src={PC_BUILD_IMAGE}
-            alt="PC Gaming Build"
+            src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=1000&q=85"
+            alt="Thùng máy gaming cao cấp với dải LED RGB"
             width={500}
             height={200}
-            className="h-60 w-full rounded-xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition-transform duration-500 hover:scale-105"
+            className="h-60 w-full rounded-xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
           />
         </div>
       </div>

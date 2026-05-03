@@ -27,7 +27,7 @@ export const ProfileForm = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || "",
+        name: user.fullName || "",
         phone: user.phone || "",
         email: user.email || "",
         gender: user.gender || "Nam",
@@ -40,7 +40,12 @@ export const ProfileForm = () => {
 
   const handleSave = () => {
     // Save to Zustand store
-    updateUser(formData);
+    updateUser({
+      fullName: formData.name,
+      phone: formData.phone,
+      email: formData.email,
+      gender: formData.gender,
+    });
     alert("Cập nhật thông tin thành công!");
   };
 

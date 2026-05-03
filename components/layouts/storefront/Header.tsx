@@ -30,8 +30,8 @@ function Header() {
   };
 
   // Lấy chữ cái đầu của tên để hiển thị avatar
-  const initials = user?.name
-    ? user.name
+  const initials = user?.fullName
+    ? user.fullName
         .split(" ")
         .slice(-2)
         .map((w: string) => w[0])
@@ -85,10 +85,10 @@ function Header() {
           {mounted && isLoggedIn && user ? (
             <Link href="/profile" className="flex items-center gap-2 ml-4 cursor-pointer hover:opacity-80 transition-opacity">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#005BAA] text-[15px] font-bold text-white shadow-sm">
-                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
               </div>
               <span className="hidden text-[14px] font-bold text-heading md:block whitespace-nowrap">
-                {user?.name || "User"}
+                {user?.fullName || "User"}
               </span>
             </Link>
           ) : (
@@ -105,10 +105,10 @@ function Header() {
               >
                 {/* Avatar */}
                 <span className="bg-primary flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white">
-                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                  {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
                 </span>
                 <span className="hidden max-w-24 truncate md:block">
-                  {user?.name?.split(" ").pop() || "Tài khoản"}
+                  {user?.fullName?.split(" ").pop() || "Tài khoản"}
                 </span>
                 <ChevronDown
                   className={cn(
@@ -126,7 +126,7 @@ function Header() {
                       Đã đăng nhập
                     </p>
                     <p className="truncate text-sm font-bold text-gray-900">
-                      {user?.name || "Tài khoản"}
+                      {user?.fullName || "Tài khoản"}
                     </p>
                   </div>
                   <Link
