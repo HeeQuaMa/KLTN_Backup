@@ -1,28 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { RecentOrderRow } from "@/lib/api/dashboardApi";
+import { formatDashboardOrderTotal } from "@/features/super-admin/dashboard/utils/format";
 
-const orders = [
-  {
-    id: "#NT-8892",
-    customer: "Nguyen Van A",
-    date: "22/01/2026",
-    total: "36.030.000",
-    status: "Chờ xử lý",
-    statusColor: "bg-orange-100 text-orange-600",
-    channel: "Website",
-  },
-  {
-    id: "#POS-001",
-    customer: "Khách lẻ",
-    date: "22/01/2026",
-    total: "390.000",
-    status: "Hoàn thành",
-    statusColor: "bg-green-100 text-green-600",
-    channel: "Tại quầy (Q1)",
-  },
-];
+function statusPillClass(status: string): string {
+  const s = status === "PENDING" ? "PENDING_CONFIRMATION" : status;
+  if (s === "COMPLETED") return "bg-green-100 text-green-600";
+  if (s === "PENDING_CONFIRMATION") return "bg-orange-100 text-orange-600";
+  if (s === "SHIPPING") return "bg-blue-100 text-blue-700";
+  if (s === "CANCELLED") return "bg-gray-100 text-gray-600";
+  return "bg-slate-100 text-slate-600";
+}
 
-export function RecentOrders() {
+function formatOrderDate(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("vi-VN");
+}
+
+export function RecentOrders({ orders }: { orders: RecentOrderRow[] }) {
   return (
     <Card className="col-span-1 border-none shadow-sm md:col-span-3 lg:col-span-4">
       <CardHeader>
@@ -41,25 +37,33 @@ export function RecentOrders() {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className="border-b border-slate-50 last:border-0">
-                <td className="py-4 font-semibold text-blue-600">{order.id}</td>
-                <td className="py-4 text-slate-700">{order.customer}</td>
-                <td className="py-4 text-slate-700">{order.date}</td>
-                <td className="py-4 text-slate-700">{order.total}</td>
-                <td className="py-4">
-                  <span
-                    className={cn(
-                      "rounded-md px-2.5 py-1 text-xs font-semibold",
-                      order.statusColor
-                    )}
-                  >
-                    {order.status}
-                  </span>
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-slate-500">
+                  Không có đơn hàng trong tháng đã chọn.
                 </td>
-                <td className="py-4 text-slate-700">{order.channel}</td>
               </tr>
-            ))}
+            ) : (
+              orders.map((order) => (
+                <tr key={`${order.orderCode}-${order.createdAt}`} className="border-b border-slate-50 last:border-0">
+                  <td className="py-4 font-semibold text-blue-600">{order.orderCode}</td>
+                  <td className="py-4 text-slate-700">{order.customerName}</td>
+                  <td className="py-4 text-slate-700">{formatOrderDate(order.createdAt)}</td>
+                  <td className="py-4 text-slate-700">{formatDashboardOrderTotal(order.totalAmount)}</td>
+                  <td className="py-4">
+                    <span
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-xs font-semibold",
+                        statusPillClass(order.status),
+                      )}
+                    >
+                      {order.statusLabel}
+                    </span>
+                  </td>
+                  <td className="py-4 text-slate-700">{order.channelLabel}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </CardContent>

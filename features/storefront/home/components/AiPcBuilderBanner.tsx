@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import Link from "next/link";
 
 const AiPcBuilderBanner = () => {
   return (
@@ -16,19 +17,21 @@ const AiPcBuilderBanner = () => {
           <p className="text-secondary-text1 mt-3 text-base lg:mt-4 lg:text-lg">
             Kiểm tra tương thích tự động. Tối ưu chi phí. Tư vấn bởi AI.
           </p>
-          <Button
-            className={cn(
-              "bg-primary hover:bg-primary-hover/90 mt-6 h-11 w-full flex-1 cursor-pointer rounded-full px-8 text-base font-semibold text-white sm:w-auto lg:mt-7 lg:h-12 lg:min-w-42",
-            )}
-          >
-            BẮT ĐẦU NGAY
-          </Button>
+          <Link href="/build-pc">
+            <Button
+              className={cn(
+                "bg-primary hover:bg-primary-hover/90 mt-6 h-11 w-full flex-1 cursor-pointer rounded-full px-8 text-base font-semibold text-white transition-transform hover:scale-105 sm:w-auto lg:mt-7 lg:h-12 lg:min-w-42",
+              )}
+            >
+              BẮT ĐẦU NGAY
+            </Button>
+          </Link>
         </div>
 
         <div className="w-full max-w-125 shrink-0 rounded-2xl lg:mt-0 lg:w-[45%]">
           <Image
-            src={"/images/pink.jpg"}
-            alt="PC Gaming"
+            src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=1000&q=85"
+            alt="Thùng máy gaming cao cấp với dải LED RGB"
             width={500}
             height={200}
             className="h-60 w-full rounded-xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.35)]"

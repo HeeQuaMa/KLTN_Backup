@@ -3,13 +3,14 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Check, Edit2, X } from "lucide-react";
+import { Check, Edit2, X, AlertTriangle } from "lucide-react";
 
 export interface BuildPartProps {
   categoryKey: string;
   categoryLabel: string; // "CPU", "Mainboard", "VGA"...
   emptyLabel: string; // "Vui lòng chọn Card màn hình"
   buttonString: string; // "CHỌN VGA"
+  slotWarnings?: string[]; // THÊM prop hứng mảng cảnh báo
   filledData?: {
     id: string | number;
     name: string;
@@ -27,6 +28,7 @@ export const BuildPartItem = ({
   categoryLabel,
   emptyLabel,
   buttonString,
+  slotWarnings,
   filledData,
   onSelect,
   onEdit,
@@ -107,6 +109,22 @@ export const BuildPartItem = ({
                 )}
               </div>
             </div>
+
+            {/*  VÙNG HIỂN THỊ CẢNH BÁO TƯƠNG THÍCH  */}
+                {slotWarnings && slotWarnings.length > 0 && (
+                  <div className="mt-1 flex flex-col gap-1">
+                    {slotWarnings.map((warn, idx) => (
+                      <span 
+                        key={idx} 
+                        className="flex items-center gap-1 w-fit rounded-md bg-orange-50 px-2 py-0.5 text-[12px] font-medium text-orange-600"
+                      >
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {warn}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {/*  KẾT THÚC VÙNG CẢNH BÁO  */}
 
             {/* Price & Actions */}
             <div className="ml-auto flex shrink-0 flex-col items-end gap-2 md:flex-row md:items-center md:gap-6">

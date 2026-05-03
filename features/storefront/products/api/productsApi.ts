@@ -1,7 +1,26 @@
 import http from "@/lib/axios";
 import { Product } from "@/features/storefront/products/utils/mockData";
 import { DetailedProduct } from "@/features/storefront/products/utils/mockProductDetail";
-import mockAvt from "@/public/images/pink.jpg";
+
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(
+  /\/$/,
+  "",
+);
+const FALLBACK_IMAGE = "/images/pink.jpg";
+
+const toAbsoluteImageUrl = (raw: unknown): string => {
+  const src = typeof raw === "string" ? raw.trim() : "";
+  if (!src) return FALLBACK_IMAGE;
+  if (/^https?:\/\//i.test(src)) return src;
+  const path = src.startsWith("/uploads/")
+    ? src
+    : src.startsWith("uploads/")
+      ? `/${src}`
+      : src.startsWith("/")
+        ? src
+        : `/${src}`;
+  return `${API_BASE}${path}`;
+};
 
 // Mapping tạm thời id category bên backend sang slug cho FE
 const categorySlugMap: Record<string, string> = {
@@ -43,7 +62,10 @@ export const getProducts = async (params?: { category?: string }): Promise<Produ
         price: price,
         originalPrice: item.basePrice ? price * 1.05 : null, // Mock original price nếu cần
         discount: null,
-        image: item.images && item.images.length > 0 ? item.images[0] : mockAvt,
+        image:
+          item.images && item.images.length > 0
+            ? toAbsoluteImageUrl(item.images[0])
+            : FALLBACK_IMAGE,
         categorySlug: mappedSlug,
         brand: item.brand || "Unknown",
         totalStock: item.totalStock || 0,
@@ -73,7 +95,9 @@ export const getProductById = async (id: string): Promise<DetailedProduct | null
       basePrice,
       originalPrice: item.basePrice ? basePrice * 1.05 : null,
       discount: null,
-      images: item.images?.length ? item.images : [mockAvt],
+      images: item.images?.length
+        ? item.images.map((img: unknown) => toAbsoluteImageUrl(img))
+        : [FALLBACK_IMAGE],
       configurations: item.configurations?.length 
         ? item.configurations 
         : [{ id: "default", name: "Mặc định", priceDelta: 0 }],

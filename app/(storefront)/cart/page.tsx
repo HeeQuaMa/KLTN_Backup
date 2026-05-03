@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useCart } from "@/features/storefront/cart/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,8 +22,8 @@ import { Stepper } from "@/components/ui/stepper";
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, updateQuantity, removeItem, getTotalItems, getTotalPrice } =
-    useCartStore();
+  const { items, updateQuantity: updateQuantityApi, removeFromCart, totalQuantity, totalPrice } =
+    useCart();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const [mounted, setMounted] = useState(false);
 
@@ -47,7 +47,7 @@ export default function CartPage() {
         <h1 className="flex items-baseline gap-2 text-2xl font-extrabold tracking-tight text-gray-900 uppercase md:text-[28px]">
           Giỏ hàng của bạn
           <span className="text-sm font-normal text-gray-500 normal-case">
-            ({getTotalItems()} sản phẩm)
+            ({totalQuantity} sản phẩm)
           </span>
         </h1>
 
@@ -91,13 +91,13 @@ export default function CartPage() {
                   className="group relative grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-12"
                 >
                   {/* Nút Xoá (Mobile & Desktop) */}
-                  <Button
-                    onClick={() => removeItem(item.cartItemId)}
+                  <button
+                    onClick={() => removeFromCart(item.cartItemId)}
                     className="hover:text-destructive absolute top-4 right-4 text-gray-300 transition-colors group-hover:opacity-100 md:top-1/2 md:-translate-y-1/2 md:opacity-0"
                     title="Xoá sản phẩm"
                   >
                     <Trash2 className="h-5 w-5" />
-                  </Button>
+                  </button>
 
                   {/* SP Info (Clickable) */}
                   <div className="col-span-1 flex gap-4 pr-6 md:col-span-6 md:pr-0">
@@ -105,11 +105,13 @@ export default function CartPage() {
                       href={`/products/${item.id}`}
                       className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-gray-100 bg-gray-50 p-2 transition-transform hover:scale-105 md:h-24 md:w-24"
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={item.image}
                         alt={item.name}
-                        fill
-                        className="object-contain p-2 mix-blend-multiply"
+                        className="max-h-full max-w-full object-contain p-2 mix-blend-multiply"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
                       />
                     </Link>
                     <div className="flex flex-col justify-center">
@@ -143,25 +145,25 @@ export default function CartPage() {
                       Số lượng:
                     </span>
                     <div className="flex items-center rounded-md border border-gray-200 bg-white md:bg-gray-50/50">
-                      <Button
+                      <button
                         onClick={() =>
-                          updateQuantity(item.cartItemId, item.quantity - 1)
+                          updateQuantityApi(item.cartItemId, item.quantity - 1)
                         }
                         className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
                       >
                         <Minus className="h-3 w-3" />
-                      </Button>
+                      </button>
                       <span className="flex h-8 w-8 items-center justify-center text-sm font-semibold">
                         {item.quantity}
                       </span>
-                      <Button
+                      <button
                         onClick={() =>
-                          updateQuantity(item.cartItemId, item.quantity + 1)
+                          updateQuantityApi(item.cartItemId, item.quantity + 1)
                         }
                         className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
                       >
                         <Plus className="h-3 w-3" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
 
@@ -203,7 +205,7 @@ export default function CartPage() {
                 <div className="mb-4 flex justify-between text-sm text-gray-600">
                   <span>Tạm tính:</span>
                   <span className="font-bold text-gray-900">
-                    {formatPrice(getTotalPrice())}
+                    {formatPrice(totalPrice)}
                   </span>
                 </div>
                 <div className="mb-6 flex justify-between text-sm text-gray-600">
@@ -231,7 +233,7 @@ export default function CartPage() {
                   </span>
                   <div className="flex flex-col items-end">
                     <span className="text-destructive text-2xl leading-none font-black">
-                      {formatPrice(getTotalPrice())}
+                      {formatPrice(totalPrice)}
                     </span>
                     <span className="mt-1 text-[10px] text-gray-400">
                       (Đã bao gồm VAT)

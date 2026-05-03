@@ -1,11 +1,47 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Users, UserPlus, Crown } from "lucide-react";
 import { StatCard } from "@/features/super-admin/shared/components/StatCard";
 import { MemberFilterBar } from "@/features/super-admin/members/components/MemberFilterBar";
 import { MemberTable } from "@/features/super-admin/members/components/MemberTable";
+import { getMembers, getMemberStats, Member, MemberStats } from "@/lib/api/memberApi";
 
-export default function SuperAdminMembersPage() {
+function SuperAdminMembersContent() {
+  const searchParams = useSearchParams();
+
+  const [members, setMembers] = useState<Member[]>([]);
+  const [stats, setStats] = useState<MemberStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Lấy params từ URL
+  const page = Number(searchParams.get("page")) || 1;
+  const search = searchParams.get("search") || "";
+  const tier = searchParams.get("tier") || "";
+
+  // Hàm gọi API
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [statsData, listData] = await Promise.all([
+        getMemberStats(),
+        getMembers({ page, limit: 10, search, tier: tier === "all" ? undefined : tier })
+      ]);
+      setStats(statsData);
+      setMembers(listData.data);
+    } catch (error) {
+      console.error("Lỗi fetch dữ liệu Member:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Lắng nghe thay đổi URL
+  useEffect(() => {
+    fetchData();
+  }, [page, search, tier]);
+
   return (
     <div className="flex flex-col gap-6 p-8">
       {/* Header */}
@@ -19,9 +55,7 @@ export default function SuperAdminMembersPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <StatCard
           title="TỔNG THÀNH VIÊN"
-          value="1,250"
-          trend="none"
-          trendText=""
+          value={stats?.totalMembers.toLocaleString() || "0"}
           icon={<Users className="h-4 w-4" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
@@ -29,9 +63,9 @@ export default function SuperAdminMembersPage() {
         />
         <StatCard
           title="KHÁCH MỚI (THÁNG NÀY)"
-          value="120"
-          trend="up"
-          trendText="15% so với tháng trước"
+          value={stats?.newThisMonth?.count.toString() || "0"}
+          trend={stats?.newThisMonth?.trend || "none"}
+          trendText={stats?.newThisMonth?.trendText || ""}
           icon={<UserPlus className="h-4 w-4" />}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
@@ -39,9 +73,7 @@ export default function SuperAdminMembersPage() {
         />
         <StatCard
           title="THÀNH VIÊN VIP (GOLD+)"
-          value="85"
-          trend="none"
-          trendText=""
+          value={stats?.vipMembers.toLocaleString() || "0"}
           icon={<Crown className="h-4 w-4" />}
           iconBgColor="bg-yellow-100"
           iconColor="text-yellow-600"
@@ -53,7 +85,15 @@ export default function SuperAdminMembersPage() {
       <MemberFilterBar />
 
       {/* Data Table */}
-      <MemberTable />
+      <MemberTable data={members} isLoading={loading} />
     </div>
+  );
+}
+
+export default function SuperAdminMembersPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Đang tải...</div>}>
+      <SuperAdminMembersContent />
+    </Suspense>
   );
 }

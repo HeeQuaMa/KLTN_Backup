@@ -34,10 +34,10 @@ export const ProfileSidebar = () => {
       {/* User Info Card */}
       <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#dbeafe] text-xl font-bold text-primary">
-          {user?.name?.charAt(0)?.toUpperCase() || "U"}
+          {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
         </div>
         <div className="flex flex-col">
-          <span className="text-[14px] font-bold text-heading">{user?.name || "User"}</span>
+          <span className="text-[14px] font-bold text-heading">{user?.fullName || "User"}</span>
           <span className="text-[13px] text-muted-foreground">Thành viên</span>
         </div>
       </div>

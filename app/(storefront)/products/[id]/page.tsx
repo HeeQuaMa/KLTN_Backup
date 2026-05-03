@@ -15,7 +15,6 @@ interface ProductPageProps {
 const ProductPage = async ({ params }: ProductPageProps) => {
   const { id } = await params;
 
-  // Lấy data chi tiết sản phẩm từ API
   const product = await getProductById(id);
   const productsList = await getProducts();
 
@@ -25,9 +24,6 @@ const ProductPage = async ({ params }: ProductPageProps) => {
 
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-6 md:px-8 lg:px-12 xl:px-16 lg:py-10 flex-1">
-      {/* Breadcrumb (Placeholder) */}
-      
-
       {/* Khối Trên (Top Section) */}
       <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-12 xl:gap-16">
         <div className="w-full lg:w-[45%] xl:w-1/2">

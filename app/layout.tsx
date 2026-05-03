@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ToastProvider } from "@/components/shared";
+
+// Các thành phần từ nhánh origin/temp-frontend
+import SiteLayout from "@/components/layouts/storefront/SiteLayout";
+import { ToastContainer } from "react-toastify";
+import { CartProvider } from "@/features/storefront/cart/context/CartContext";
+import AuthProvider from "@/features/auth/components/AuthProvider";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,11 +31,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
         suppressHydrationWarning
       >
-        {children}
-        <ToastProvider />
+        <AuthProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </AuthProvider>
+        <ToastContainer />
       </body>
     </html>
   );

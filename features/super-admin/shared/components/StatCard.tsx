@@ -5,8 +5,8 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 interface StatCardProps {
   title: string;
   value: string;
-  trend: "up" | "down" | "none";
-  trendText: string;
+  trend?: "up" | "down" | "none";
+  trendText?: string;
   icon: React.ReactNode;
   iconBgColor: string;
   iconColor: string;

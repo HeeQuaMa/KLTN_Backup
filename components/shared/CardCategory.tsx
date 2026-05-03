@@ -1,17 +1,13 @@
 import Image, { StaticImageData } from "next/image";
-
-interface Category {
-  image: StaticImageData;
-  nameCategory: string;
-}
-
-interface ActiveSelect extends Category {
-  isItemActive: boolean;
-}
-
 import { cn } from "@/lib/utils";
 
-const CardCategory = ({ image, nameCategory, isItemActive }: ActiveSelect) => {
+interface CardCategoryProps {
+  image: string | StaticImageData;
+  nameCategory: string;
+  isItemActive?: boolean;
+}
+
+const CardCategory = ({ image, nameCategory, isItemActive = false }: CardCategoryProps) => {
   return (
     <div
       className={cn(

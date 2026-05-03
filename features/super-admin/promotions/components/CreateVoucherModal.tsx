@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import { X } from "lucide-react";
 interface CreateVoucherModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess: () => void; // Khai báo nhận hàm refresh data
 }
 
 type DiscountType = "percent" | "fixed";
@@ -22,26 +24,56 @@ type DiscountType = "percent" | "fixed";
 export function CreateVoucherModal({
   open,
   onOpenChange,
+  onSuccess,
 }: CreateVoucherModalProps) {
   const [discountType, setDiscountType] = useState<DiscountType>("percent");
   const [code, setCode] = useState("");
+  const [description, setDescription] = useState(""); // Thêm state cho Tên chương trình
   const [discountValue, setDiscountValue] = useState("");
   const [usageLimit, setUsageLimit] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Thêm state loading cho nút bấm
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle form submission
-    console.log({
-      code,
-      discountType,
-      discountValue,
-      usageLimit,
-      startDate,
-      endDate,
-    });
-    onOpenChange(false);
+    setIsLoading(true);
+
+    try {
+      // Map data từ form cho khớp với Schema của Backend
+      const payload = {
+        code,
+        description,
+        discountType: discountType === "percent" ? "Percentage" : "Fixed Amount",
+        discountValue: Number(discountValue),
+        minOrderValue: 0, // Mặc định 0, bạn có thể thêm ô nhập liệu sau nếu cần
+        maxDiscount: 0,
+        usageLimit: Number(usageLimit) || 0,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+      };
+
+      // Gọi API tạo mới
+      await axios.post("http://localhost:3001/promotions", payload);
+      
+      alert("Tạo mã khuyến mãi thành công!");
+      
+      // Reset form sau khi tạo thành công
+      setCode("");
+      setDescription("");
+      setDiscountValue("");
+      setUsageLimit("");
+      setStartDate("");
+      setEndDate("");
+      
+      onSuccess(); // Gọi hàm refresh bảng dữ liệu
+      onOpenChange(false); // Đóng modal
+    } catch (error: any) {
+      console.error(error);
+      alert(error.response?.data?.message || "Có lỗi xảy ra khi tạo mã khuyến mãi!");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -68,9 +100,23 @@ export function CreateVoucherModal({
               Mã Voucher (Code) <span className="text-red-500">*</span>
             </Label>
             <Input
-              placeholder="VD: CHUC MUNG NAM MOI"
+              placeholder="VD: CHUCMUNGNAMMOI"
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ''))} // Tự động viết hoa và xóa khoảng trắng
+              className="h-11 bg-slate-50 border-slate-200 text-sm placeholder:text-slate-400 font-bold text-amber-600"
+              required
+            />
+          </div>
+
+          {/* Tên chương trình */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-slate-700">
+              Tên chương trình <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              placeholder="VD: Siêu Sale Đón Tết"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="h-11 bg-slate-50 border-slate-200 text-sm placeholder:text-slate-400"
               required
             />
@@ -137,8 +183,8 @@ export function CreateVoucherModal({
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-slate-700">
               {discountType === "percent"
-                ? "Giá trị giảm (%)"
-                : "Giá trị giảm (VNĐ)"}
+                ? "Giá trị giảm (%) *"
+                : "Giá trị giảm (VNĐ) *"}
             </Label>
             <Input
               type="number"
@@ -146,19 +192,20 @@ export function CreateVoucherModal({
               value={discountValue}
               onChange={(e) => setDiscountValue(e.target.value)}
               className="h-11 bg-slate-50 border-slate-200 text-sm"
-              min={0}
+              min={1}
               max={discountType === "percent" ? 100 : undefined}
+              required
             />
           </div>
 
           {/* Giới hạn số lượt dùng */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-slate-700">
-              Giới hạn số lượt dùng
+              Giới hạn số lượt dùng <span className="text-slate-400 font-normal">(Để trống nếu không giới hạn)</span>
             </Label>
             <Input
               type="number"
-              placeholder="100"
+              placeholder="VD: 100"
               value={usageLimit}
               onChange={(e) => setUsageLimit(e.target.value)}
               className="h-11 bg-slate-50 border-slate-200 text-sm"
@@ -169,7 +216,7 @@ export function CreateVoucherModal({
           {/* Thời gian áp dụng */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-slate-700">
-              Thời gian áp dụng
+              Thời gian áp dụng <span className="text-red-500">*</span>
             </Label>
             <div className="grid grid-cols-2 gap-3 items-center">
               <Input
@@ -177,6 +224,7 @@ export function CreateVoucherModal({
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="h-11 bg-slate-50 border-slate-200 text-sm"
+                required
               />
               <div className="flex items-center gap-3">
                 <span className="text-slate-400 font-medium">-</span>
@@ -185,6 +233,7 @@ export function CreateVoucherModal({
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="h-11 bg-slate-50 border-slate-200 text-sm flex-1"
+                  required
                 />
               </div>
             </div>
@@ -193,9 +242,10 @@ export function CreateVoucherModal({
           {/* Submit button */}
           <Button
             type="submit"
-            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-base tracking-wider rounded-lg mt-2"
+            disabled={isLoading}
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-base tracking-wider rounded-lg mt-2 disabled:opacity-70"
           >
-            LƯU MÃ
+            {isLoading ? "ĐANG LƯU..." : "LƯU MÃ"}
           </Button>
         </form>
       </DialogContent>

@@ -1,172 +1,211 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Laptop, Cpu } from "lucide-react";
+import { ChevronDown, Laptop, Cpu } from "lucide-react";
+import http from "@/lib/axios";
+
+interface Category {
+  _id: string;
+  name: string;
+  slug?: string;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const PC_KEYWORDS = [
+  "cpu", "mainboard", "bo mạch", "ram", "gpu", "card màn", "vga",
+  "psu", "nguồn", "case", "vỏ", "cooler", "tản nhiệt", "ssd", "nvme", "ổ cứng",
+];
+
+const isPCComponent = (name: string) =>
+  PC_KEYWORDS.some((kw) => name.toLowerCase().includes(kw));
+
+/**
+ * Enriches a raw DB category name with a Vietnamese description.
+ * Only adds the suffix when the name doesn't already contain " - ".
+ * DB names like "CPU" → "CPU - Bộ vi xử lý"
+ * DB names already like "VGA - Card màn hình" → left as-is.
+ */
+function getDisplayName(name: string): string {
+  if (name.includes(" - ") || name.includes("/")) return name; // already descriptive
+
+  const l = name.toLowerCase();
+  if (l === "cpu")                        return "CPU - Bộ vi xử lý";
+  if (l === "gpu" || l === "vga")         return "VGA - Card màn hình";
+  if (l === "ram")                        return "RAM - Bộ nhớ trong";
+  if (l === "ssd")                        return "Ổ cứng SSD / HDD";
+  if (l === "psu")                        return "Nguồn máy tính (PSU)";
+  if (l === "case")                       return "Vỏ Case máy tính";
+  if (l === "cooler")                     return "Tản nhiệt CPU";
+  if (l.includes("mainboard"))            return "Mainboard - Bo mạch chủ";
+  if (l.includes("card màn") || l.includes("gpu") || l.includes("vga"))
+                                          return "VGA - Card màn hình";
+  if (l.includes("nguồn"))               return "Nguồn máy tính (PSU)";
+  if (l.includes("tản nhiệt"))           return "Tản nhiệt CPU";
+  if (l.includes("ổ cứng") || l.includes("nvme")) return "Ổ cứng SSD / HDD";
+  if (l.includes("vỏ") || l.includes("case"))     return "Vỏ Case máy tính";
+  return name;
+}
+
+/**
+ * Full static laptop list — always shown in the left column.
+ * Matches the reference design exactly.
+ */
+const LAPTOP_ITEMS = [
+  { label: "Laptop Gaming",              href: "/products?category=laptop-gaming" },
+  { label: "Laptop Văn phòng",           href: "/products?category=laptop-van-phong" },
+  { label: "Laptop Đồ họa / Kỹ thuật",  href: "/products?category=laptop-do-hoa" },
+  { label: "MacBook & iMac",             href: "/products?category=macbook" },
+  { label: "Máy tính bộ (PC Build sẵn)", href: "/products?category=may-tinh-bo" },
+  { label: "Mini PC",                    href: "/products?category=mini-pc" },
+];
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 const Navigation = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    http
+      .get<Category[]>("/categories")
+      .then((res) => setCategories(res.data ?? []))
+      .catch(() => setCategories([]));
+  }, []);
+
+  // Only use DB categories for the PC components column
+  const pcCategories = categories.filter((c) => isPCComponent(c.name));
+
+  const open  = () => { if (hideTimer.current) clearTimeout(hideTimer.current); setMenuOpen(true); };
+  const close = () => { hideTimer.current = setTimeout(() => setMenuOpen(false), 150); };
+
   return (
-    <nav className="bg-primary flex items-center gap-6 overflow-x-auto px-4 py-3 text-sm font-bold whitespace-nowrap text-white uppercase sm:gap-10 md:px-8 lg:h-12.5 lg:gap-20 lg:px-12 lg:py-0 lg:text-base xl:px-16 [&::-webkit-scrollbar]:hidden">
-      <HoverCard openDelay={100} closeDelay={100}>
-        <HoverCardTrigger asChild>
-          <Link
-            href="/products"
-            className="cursor-pointer transition-colors hover:text-gray-200"
-          >
-            Danh mục sản phẩm
-          </Link>
-        </HoverCardTrigger>
-        <HoverCardContent
-          className="bg-background border-border mt-2 ml-0 flex max-h-[80vh] w-[calc(100vw-2rem)] flex-col gap-4 overflow-y-auto rounded-xl p-4 shadow-[0px_4px_24px_rgba(0,0,0,0.1)] sm:ml-4 sm:w-auto sm:flex-row sm:gap-8 sm:p-6 md:ml-8 lg:ml-12 xl:ml-16"
-          align="start"
-          sideOffset={8}
+    /*
+     * Z-INDEX / OVERFLOW NOTE (do not revert)
+     * ────────────────────────────────────────
+     * CSS spec forces overflow-y → auto when overflow-x is auto.
+     * The dropdown MUST be a direct child of <nav> (NOT inside the
+     * overflow-x-auto inner div) so it is never clipped.
+     */
+    <nav className="bg-primary relative z-10 text-sm font-bold text-white uppercase lg:text-base">
+
+      {/* Scrollable nav bar row */}
+      <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap px-4 py-3 sm:gap-10 md:px-8 lg:px-12 xl:px-16 lg:h-12.5 lg:gap-20 lg:py-0 [&::-webkit-scrollbar]:hidden">
+        <button
+          onMouseEnter={open}
+          onMouseLeave={close}
+          className="flex shrink-0 items-center gap-1.5 transition-colors hover:text-gray-200 focus:outline-none"
+          aria-expanded={menuOpen}
+          aria-haspopup="true"
         >
-          {/* Cột 1: Laptop & Mac */}
-          <div className="border-border flex w-full flex-col gap-3 border-b pb-4 sm:w-70 sm:gap-5 sm:border-r sm:border-b-0 sm:pr-8 sm:pb-0">
-            <Link href="/products" className="group flex items-center gap-4">
-              <div className="rounded-lg bg-blue-50 p-2.5 transition-colors group-hover:bg-blue-100">
-                <Laptop className="h-6 w-6 text-blue-600" />
-              </div>
-              <span className="group-hover:text-primary text-lg font-bold text-gray-900 normal-case transition-colors">
-                Laptop & Mac
-              </span>
-            </Link>
+          DANH MỤC SẢN PHẨM
+          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
+        </button>
 
-            <ul className="ml-1 flex flex-col gap-4 text-[16px] font-normal text-gray-600 normal-case">
-              <li>
-                <Link
-                  href="/category/laptop-gaming"
-                  className="text-primary hover:text-primary-hover block font-medium transition-colors"
-                >
-                  Laptop Gaming
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/laptop-van-phong"
-                  className="hover:text-primary block transition-colors"
-                >
-                  Laptop Văn phòng
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/laptop-do-hoa"
-                  className="hover:text-primary block transition-colors"
-                >
-                  Laptop Đồ họa / Kỹ thuật
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/macbook-imac"
-                  className="hover:text-primary block transition-colors"
-                >
-                  MacBook & iMac
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/pc-build-san"
-                  className="hover:text-primary block transition-colors"
-                >
-                  Máy tính bộ (PC Build sẵn)
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/mini-pc"
-                  className="hover:text-primary block transition-colors"
-                >
-                  Mini PC
-                </Link>
-              </li>
-            </ul>
+        <Link href="/build-pc"   className="shrink-0 transition-colors hover:text-gray-200">Build PC (AI)</Link>
+        <Link href="/bao-hanh"   className="shrink-0 transition-colors hover:text-gray-200">Tra cứu bảo hành</Link>
+        <Link href="/huong-dan"  className="shrink-0 transition-colors hover:text-gray-200">Hướng dẫn mua hàng</Link>
+        <Link href="/khuyen-mai" className="text-destructive shrink-0 transition-colors hover:text-red-400">🔥 Khuyến mãi Hot</Link>
+      </div>
+
+      {/* ── Mega-menu dropdown ────────────────────────────────────────────────
+          Direct child of <nav> — never clipped by the overflow row above.
+          `normal-case` resets the nav's `uppercase` so item text is readable.
+      ── */}
+      {menuOpen && (
+        <div
+          onMouseEnter={open}
+          onMouseLeave={close}
+          className="absolute left-0 top-full z-[9999] w-[660px] rounded-b-2xl border border-t-0 border-gray-100 bg-white normal-case shadow-2xl"
+        >
+          <div className="grid grid-cols-2 divide-x divide-gray-100">
+
+            {/* ── Left column: Laptop & Mac ── */}
+            <div className="px-8 py-7">
+              {/* Heading */}
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Laptop className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                </div>
+                <span className="text-[15px] font-bold tracking-normal text-gray-900">
+                  Laptop &amp; Mac
+                </span>
+              </div>
+
+              {/* Items — plain text, color-only hover, no icons */}
+              <ul className="flex flex-col gap-0">
+                {LAPTOP_ITEMS.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="block py-[9px] text-[15px] font-normal tracking-normal text-gray-600 transition-colors hover:text-primary"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* ── Right column: Linh kiện Build PC ── */}
+            <div className="px-8 py-7">
+              {/* Heading */}
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Cpu className="h-5 w-5 text-primary" strokeWidth={1.75} />
+                </div>
+                <span className="text-[15px] font-bold tracking-normal text-gray-900">
+                  Linh kiện Build PC
+                </span>
+              </div>
+
+              {/* Items — SINGLE column so long names never wrap.
+                  Use slug in URL (stable) — backend resolves slug → ObjectId. */}
+              <ul className="flex flex-col gap-0">
+                {pcCategories.map((cat) => (
+                  <li key={cat._id}>
+                    <Link
+                      href={`/products?category=${cat.slug ?? cat._id}`}
+                      onClick={() => setMenuOpen(false)}
+                      className="block py-[9px] text-[15px] font-normal tracking-normal text-gray-600 transition-colors hover:text-primary"
+                    >
+                      {getDisplayName(cat.name)}
+                    </Link>
+                  </li>
+                ))}
+                {pcCategories.length === 0 && (
+                  <li className="py-4 text-sm text-gray-400">Đang tải danh mục…</li>
+                )}
+              </ul>
+            </div>
           </div>
 
-          {/* Cột 2: Linh kiện Build PC */}
-          <div className="flex w-full flex-col gap-3 pt-2 sm:w-70 sm:gap-5 sm:pt-0">
-            <Link href="/build-pc" className="group flex items-center gap-4">
-              <div className="rounded-lg bg-blue-50 p-2.5 transition-colors group-hover:bg-blue-100">
-                <Cpu className="h-6 w-6 text-blue-600" />
-              </div>
-              <span className="group-hover:text-primary text-lg font-bold text-gray-900 normal-case transition-colors">
-                Linh kiện Build PC
-              </span>
-            </Link>
-
-            <ul className="ml-1 flex flex-col gap-4 text-[16px] font-normal text-gray-600 normal-case">
-              <li>
-                <Link
-                  href="/category/cpu"
-                  className="hover:text-primary block transition-colors"
-                >
-                  CPU - Bộ vi xử lý
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/vga"
-                  className="hover:text-primary block transition-colors"
-                >
-                  VGA - Card màn hình
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/mainboard"
-                  className="hover:text-primary block transition-colors"
-                >
-                  Mainboard - Bo mạch chủ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/ram"
-                  className="hover:text-primary block transition-colors"
-                >
-                  RAM - Bộ nhớ trong
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/ssd-hdd"
-                  className="hover:text-primary block transition-colors"
-                >
-                  Ổ cứng SSD / HDD
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/category/psu-case"
-                  className="hover:text-primary block transition-colors"
-                >
-                  Nguồn & Case máy tính
-                </Link>
-              </li>
-            </ul>
+          {/* Footer — separated by top border, aligned with column padding */}
+          <div className="grid grid-cols-2 divide-x divide-gray-100 border-t border-gray-100">
+            <div className="px-8 py-4">
+              <Link
+                href="/products"
+                onClick={() => setMenuOpen(false)}
+                className="text-primary text-sm font-semibold tracking-normal transition-colors hover:underline"
+              >
+                Xem tất cả sản phẩm →
+              </Link>
+            </div>
+            <div className="px-8 py-4">
+              <Link
+                href="/build-pc"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-semibold tracking-normal text-gray-500 transition-colors hover:text-primary hover:underline"
+              >
+                Build PC →
+              </Link>
+            </div>
           </div>
-        </HoverCardContent>
-      </HoverCard>
-
-      <Link href="/build-pc" className="transition-colors hover:text-gray-200">
-        Build PC (AI)
-      </Link>
-      <Link href="/bao-hanh" className="transition-colors hover:text-gray-200">
-        Tra cứu bảo hành
-      </Link>
-      <Link href="/huong-dan" className="transition-colors hover:text-gray-200">
-        Hướng dẫn mua hàng
-      </Link>
-      <Link
-        href="/khuyen-mai"
-        className="text-destructive transition-colors hover:text-red-400"
-      >
-        🔥Khuyến mãi Hot
-      </Link>
+        </div>
+      )}
     </nav>
   );
 };

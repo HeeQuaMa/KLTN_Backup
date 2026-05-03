@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 
@@ -17,18 +16,25 @@ export const OrderItem = ({ order }: OrderItemProps) => {
     }).format(amount).replace("₫", "đ");
   };
 
-  const statusConfig = {
+  const statusConfig: Record<
+    OrderData["status"],
+    { label: string; className: string }
+  > = {
     pending: {
       label: "Đang xử lý",
-      className: "bg-[#FFF8E1] text-[#F57F17]", // Yellow emphasis
+      className: "bg-[#FFF8E1] text-[#F57F17]",
+    },
+    shipping: {
+      label: "Đang giao",
+      className: "bg-blue-50 text-primary",
     },
     completed: {
       label: "Hoàn thành",
-      className: "bg-success/15 text-success", // Green emphasis
+      className: "bg-success/15 text-success",
     },
     cancelled: {
       label: "Đã hủy",
-      className: "bg-gray-100 text-gray-500", // Gray emphasis
+      className: "bg-gray-100 text-gray-500",
     },
   };
 
@@ -57,12 +63,13 @@ export const OrderItem = ({ order }: OrderItemProps) => {
 
       {/* Body: Products */}
       <div className="flex flex-col pt-4">
-        {order.products.map((product) => (
-          <div key={product.id} className="mb-4 flex gap-4 last:mb-0 pb-4 border-b border-gray-100">
+        {order.products.map((product, idx) => (
+          <div key={`${order.id}-${idx}`} className="mb-4 flex gap-4 last:mb-0 pb-4 border-b border-gray-100">
             {/* Image placeholder */}
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-gray-100 border border-gray-100 relative">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-gray-100 border border-gray-100 relative flex items-center justify-center">
               {product.imageUrl ? (
-                <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
               ) : null}
             </div>
 
@@ -89,12 +96,25 @@ export const OrderItem = ({ order }: OrderItemProps) => {
         </div>
 
         <div className="flex items-center gap-3">
-          {order.status === "pending" && (
+          {(order.status === "pending" || order.status === "shipping") && (
             <>
-              <Button variant="outline" className="h-9 font-bold text-heading hover:bg-gray-50 bg-white">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 font-bold text-heading hover:bg-gray-50 bg-white"
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
                 Chi tiết
               </Button>
-              <Button className="h-9 px-6 font-bold text-white shadow-sm hover:opacity-90">
+              <Button
+                type="button"
+                className="h-9 px-6 font-bold text-white shadow-sm hover:opacity-90"
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
                 Theo dõi
               </Button>
             </>
@@ -102,17 +122,38 @@ export const OrderItem = ({ order }: OrderItemProps) => {
 
           {order.status === "completed" && (
             <>
-              <Button variant="outline" className="h-9 font-bold text-heading hover:bg-gray-50 bg-white">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 font-bold text-heading hover:bg-gray-50 bg-white"
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
                 Xem hóa đơn
               </Button>
-              <Button variant="outline" className="h-9 border-primary text-primary hover:bg-blue-50 bg-white font-bold">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 border-primary text-primary hover:bg-blue-50 bg-white font-bold"
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
                 Mua lại
               </Button>
             </>
           )}
 
           {order.status === "cancelled" && (
-            <Button variant="outline" className="h-9 border-primary text-primary hover:bg-blue-50 bg-white font-bold px-8">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 border-primary text-primary hover:bg-blue-50 bg-white font-bold px-8"
+              onClick={(e) => {
+                e.preventDefault();
+              }}
+            >
               Mua lại
             </Button>
           )}

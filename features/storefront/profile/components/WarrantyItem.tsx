@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { WarrantyData } from "../types/warranty";
 
@@ -25,9 +24,10 @@ export const WarrantyItem = ({ item }: { item: WarrantyData }) => {
     <div className="flex flex-col rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
       <div className="flex gap-4">
         {/* Image placeholder */}
-        <div className="h-[90px] w-[90px] shrink-0 overflow-hidden rounded-md bg-gray-100 border border-gray-100 relative">
+        <div className="h-[90px] w-[90px] shrink-0 overflow-hidden rounded-md bg-gray-100 border border-gray-100 relative flex items-center justify-center">
           {item.imageUrl ? (
-            <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" />
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={item.imageUrl} alt={item.productName} className="h-full w-full object-cover" />
           ) : null}
         </div>
 

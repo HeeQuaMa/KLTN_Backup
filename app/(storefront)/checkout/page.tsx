@@ -7,8 +7,15 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
-import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useCartStore } from "@/store/useCartStore";
+import { useCart } from "@/features/storefront/cart/context/CartContext";
+import {
+  createOrder,
+  mapCartItemsToOrderItems,
+  hasMockItems,
+  markMyOrdersStale,
+} from "@/lib/api/orderApi";
 import { addressApi, UserAddress } from "@/features/storefront/address/api/addressApi";
 import { vietnamProvincesApi, VietnamProvince, VietnamDistrict, VietnamWard } from "@/features/storefront/address/api/vietnamProvincesApi";
 import { CHECKOUT_FEES } from "@/constants/checkout";
@@ -24,7 +31,7 @@ import { AddressModal } from "@/features/storefront/address/components/AddressMo
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, totalPrice, clearCart } = useCart();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const [mounted, setMounted] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -129,15 +136,13 @@ export default function CheckoutPage() {
   const VNPAY_DISCOUNT =
     selectedPayment === "VNPAY" ? CHECKOUT_FEES.VNPAY_DISCOUNT_AMOUNT : 0;
   const finalPrice =
-    getTotalPrice() +
+    totalPrice +
     CHECKOUT_FEES.SHIPPING_FEE -
     CHECKOUT_FEES.DISCOUNT -
     VNPAY_DISCOUNT;
 
   const onSubmit = async (data: CheckoutFormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Fake API
-    
-    // Nếu user tích chọn lưu địa chỉ, lưu xuống API qua LocalStorage mock
+    // Nếu user tích chọn lưu địa chỉ
     if (data.saveAddress) {
       await addressApi.saveAddress({
         fullName: data.fullName,
@@ -146,30 +151,68 @@ export default function CheckoutPage() {
         district: data.district,
         ward: data.ward,
         addressDetail: data.addressDetail,
-        isDefault: false
+        isDefault: false,
       });
       addressApi.getSavedAddresses().then(setSavedAddresses);
     }
 
-    const generatedOrderId = `#NT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const orderData = {
+    let generatedOrderId = `#NT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Cảnh báo nếu giỏ hàng có sản phẩm demo (ID không phải MongoDB ObjectId)
+    if (hasMockItems(items)) {
+      toast.info(
+        "Một số sản phẩm demo trong giỏ hàng sẽ không được lưu vào hệ thống.",
+        { autoClose: 4000 },
+      );
+    }
+
+    const realItems = mapCartItemsToOrderItems(items);
+
+    // Có sản phẩm thật: lưu đơn qua API (user từ JWT; BE bỏ qua userId trong body).
+    if (realItems.length > 0) {
+      try {
+        const result = await createOrder({
+          items: realItems,
+          totalAmount: finalPrice,
+          channel: "ONLINE",
+          customerInfo: {
+            fullName: data.fullName,
+            phone: data.phone,
+            email: data.email,
+            city: data.city,
+            district: data.district,
+            ward: data.ward,
+            addressDetail: data.addressDetail,
+            paymentMethod: data.paymentMethod as "COD" | "VNPAY" | "MOMO",
+          },
+        });
+        const code =
+          result.orderCode != null && String(result.orderCode).length > 0
+            ? String(result.orderCode)
+            : String(result._id ?? "");
+        if (code) {
+          generatedOrderId = code.startsWith("#") ? code : `#${code}`;
+        }
+        markMyOrdersStale();
+      } catch (err) {
+        console.error("createOrder:", err);
+        toast.error(
+          "Không lưu được đơn hàng. Vui lòng kiểm tra đăng nhập và thử lại.",
+          { autoClose: 4000 },
+        );
+        return;
+      }
+    }
+
+    toast.success("Đặt hàng thành công!", { autoClose: 3000 });
+
+    setOrderResult({
       orderId: generatedOrderId,
       customer: data,
       total: finalPrice,
-    };
-
-    console.log("Order Data:", {
-      order: items,
-      ...orderData,
     });
-
-    toast.success("Đặt hàng thành công!", {
-      autoClose: 3000,
-    });
-
-    setOrderResult(orderData);
     setIsSuccess(true);
-    clearCart();
+    await clearCart();
   };
 
   if (!mounted || !isLoggedIn || (items.length === 0 && !isSuccess))
@@ -600,7 +643,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-base">
                 <span className="font-medium text-gray-600">Tạm tính:</span>
                 <span className="font-bold text-gray-900">
-                  {formatPrice(getTotalPrice())}
+                  {formatPrice(totalPrice)}
                 </span>
               </div>
               <div className="flex justify-between text-base">
@@ -663,7 +706,7 @@ export default function CheckoutPage() {
         onClose={() => setIsAddressModalOpen(false)}
         addresses={savedAddresses}
         selectedId={selectedSavedAddrId}
-        onSelect={(addr) => {
+        onSelect={(addr: UserAddress) => {
           setSelectedSavedAddrId(addr.id);
           setValue("fullName", addr.fullName, { shouldValidate: true });
           setValue("phone", addr.phone, { shouldValidate: true });

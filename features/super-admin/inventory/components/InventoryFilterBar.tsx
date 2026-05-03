@@ -1,8 +1,16 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { InventoryBranch } from "@/lib/api/inventoryApi";
 
-export function InventoryFilterBar() {
+export function InventoryFilterBar(props: {
+  branch: InventoryBranch;
+  onBranchChange: (v: InventoryBranch) => void;
+  searchValue: string;
+  onSearchChange: (v: string) => void;
+}) {
+  const { branch, onBranchChange, searchValue, onSearchChange } = props;
+
   return (
     <div className="flex flex-col gap-4 bg-white p-4 rounded-xl shadow-sm md:flex-row md:items-center">
       <div className="relative flex-1">
@@ -10,11 +18,16 @@ export function InventoryFilterBar() {
         <Input
           placeholder="Tìm SKU, Tên SP..."
           className="pl-9 h-10 w-full md:max-w-md bg-slate-50 border-slate-200"
+          value={searchValue}
+          onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
-      
+
       <div className="flex items-center gap-3">
-        <Select defaultValue="all">
+        <Select
+          value={branch}
+          onValueChange={(v) => onBranchChange(v as InventoryBranch)}
+        >
           <SelectTrigger className="w-[200px] h-10 bg-slate-50 border-slate-200">
             <SelectValue placeholder="Chọn kho" />
           </SelectTrigger>

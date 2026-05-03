@@ -5,36 +5,33 @@ import {
   Bar,
   BarChart,
   ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  Legend,
 } from "recharts";
+import type { RevenueChartWeek } from "@/lib/api/dashboardApi";
 
-const data = [
-  {
-    name: "Tuần 1",
-    online: 3000,
-    offline: 4000,
-  },
-  {
-    name: "Tuần 2",
-    online: 3500,
-    offline: 3000,
-  },
-  {
-    name: "Tuần 3",
-    online: 4500,
-    offline: 6000,
-  },
-  {
-    name: "Tuần 4",
-    online: 6500,
-    offline: 5000,
-  },
-];
+type Row = RevenueChartWeek & { name: string };
 
-export function DashboardChart() {
+export function DashboardChart({
+  weeks,
+}: {
+  weeks: RevenueChartWeek[];
+}) {
+  const data: Row[] = (weeks.length ? weeks : []).map((w) => ({
+    ...w,
+    name: w.label,
+  }));
+
+  const fallback: Row[] = [
+    { name: "Tuần 1", label: "Tuần 1", online: 0, offline: 0 },
+    { name: "Tuần 2", label: "Tuần 2", online: 0, offline: 0 },
+    { name: "Tuần 3", label: "Tuần 3", online: 0, offline: 0 },
+    { name: "Tuần 4", label: "Tuần 4", online: 0, offline: 0 },
+  ];
+
+  const chartData = data.length ? data : fallback;
+
   return (
     <Card className="col-span-1 border-none shadow-sm md:col-span-2 lg:col-span-3">
       <CardHeader className="flex flex-row items-center justify-between pb-8">
@@ -55,7 +52,7 @@ export function DashboardChart() {
       <CardContent>
         <div className="h-62.5 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} barGap={8}>
+            <BarChart data={chartData} barGap={8}>
               <XAxis
                 dataKey="name"
                 stroke="#888888"
@@ -73,6 +70,10 @@ export function DashboardChart() {
               />
               <Tooltip
                 cursor={{ fill: "transparent" }}
+                formatter={(value) => [
+                  `${Number(value ?? 0).toLocaleString("vi-VN")} đ`,
+                  "",
+                ]}
                 contentStyle={{
                   borderRadius: "8px",
                   border: "none",
@@ -81,12 +82,14 @@ export function DashboardChart() {
               />
               <Bar
                 dataKey="online"
+                name="Online"
                 fill="#60a5fa"
                 radius={[2, 2, 0, 0]}
                 barSize={32}
               />
               <Bar
                 dataKey="offline"
+                name="Offline"
                 fill="#334155"
                 radius={[2, 2, 0, 0]}
                 barSize={32}

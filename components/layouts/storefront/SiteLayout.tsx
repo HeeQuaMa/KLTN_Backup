@@ -16,8 +16,14 @@ export const SiteLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      {!isAuthPage && <Header />}
-      {!isAuthPage && <Navigation />}
+      {/* isolate + z-[100]: header row uses z-[10000] so account dropdown stays
+          above the blue Navigation bar (nav is z-10); both sit above <main>. */}
+      {!isAuthPage && (
+        <div className="relative z-[100] isolate">
+          <Header />
+          <Navigation />
+        </div>
+      )}
 
       <main className="flex w-full grow flex-col bg-white">{children}</main>
 
