@@ -1,12 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation"; // 1. Thêm useRouter
 import { cn } from "@/lib/utils";
 import { SUPER_ADMIN_NAV_ITEMS } from "@/constants/super-admin";
+import { LogOut } from "lucide-react"; // 2. Thêm icon Đăng xuất
 
 export function SuperAdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter(); // 3. Khởi tạo router
+
+  // 4. Hàm xử lý Đăng xuất
+  const handleLogout = () => {
+    if (window.confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?")) {
+      // Xóa token và thông tin user
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_info");
+      
+      // Đá về trang login
+      router.push("/admin-login");
+    }
+  };
 
   return (
     <aside className="flex w-64 flex-col bg-[#111827] text-slate-300">
@@ -45,6 +59,17 @@ export function SuperAdminSidebar() {
           ))}
         </ul>
       </nav>
+
+      {/* 5. GIAO DIỆN NÚT ĐĂNG XUẤT NẰM Ở ĐÁY SIDEBAR */}
+      <div className="border-t border-slate-800 p-4 mt-auto">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-400 transition-colors hover:bg-slate-800 hover:text-red-300"
+        >
+          <LogOut className="h-5 w-5" />
+          Đăng xuất
+        </button>
+      </div>
     </aside>
   );
 }

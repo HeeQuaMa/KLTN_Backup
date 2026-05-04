@@ -11,9 +11,9 @@ interface MemberTableProps {
 
 export function MemberTable({ data, isLoading }: MemberTableProps) {
   return (
-    <div className="rounded-xl bg-white shadow-sm overflow-hidden min-h-[400px] relative">
+    <div className="relative min-h-[400px] overflow-hidden rounded-xl bg-white shadow-sm">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       )}
@@ -21,14 +21,14 @@ export function MemberTable({ data, isLoading }: MemberTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-xs text-slate-500 uppercase tracking-wider">
+            <tr className="border-b border-slate-200 bg-slate-50 text-xs tracking-wider text-slate-500 uppercase">
               <th className="px-6 py-4 font-semibold">MÃ KH</th>
               <th className="px-6 py-4 font-semibold">HỌ VÀ TÊN</th>
               <th className="px-6 py-4 font-semibold">SỐ ĐIỆN THOẠI</th>
               <th className="px-6 py-4 font-semibold">HẠNG THẺ</th>
               <th className="px-6 py-4 font-semibold">TỔNG CHI TIÊU</th>
               <th className="px-6 py-4 font-semibold">NGÀY GIA NHẬP</th>
-              <th className="px-6 py-4 font-semibold text-center">HÀNH ĐỘNG</th>
+              <th className="px-6 py-4 text-center font-semibold">HÀNH ĐỘNG</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -40,18 +40,36 @@ export function MemberTable({ data, isLoading }: MemberTableProps) {
               </tr>
             ) : (
               data.map((member) => (
-                <tr key={member._id} className="hover:bg-slate-50 transition-colors">
+                <tr
+                  key={member._id}
+                  className="transition-colors hover:bg-slate-50"
+                >
                   <td className="px-6 py-4 font-semibold text-blue-600">
                     {member.memberCode || "#MEM-XXX"}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-slate-800">{member.fullName}</span>
-                      <span className="text-xs text-slate-400">{member.email}</span>
+                    <div className="flex flex-col gap-1">
+                      {/* Bọc Tên và Nhãn vào một hàng ngang */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-800">
+                          {member.fullName}
+                        </span>
+                        {member.isDeleted && (
+                          <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">
+                            Đã khóa
+                          </span>
+                        )}
+                      </div>
+                      {/* Email nằm ở dòng dưới */}
+                      <span className="text-xs text-slate-400">
+                        {member.email}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600">{member.phone || "N/A"}</td>
-                  
+                  <td className="px-6 py-4 text-slate-600">
+                    {member.phone || "N/A"}
+                  </td>
+
                   <td className="px-6 py-4">
                     {member.tier === "Gold" && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
@@ -76,17 +94,20 @@ export function MemberTable({ data, isLoading }: MemberTableProps) {
                   </td>
 
                   <td className="px-6 py-4 font-bold text-slate-800">
-                    {new Intl.NumberFormat("vi-VN").format(member.totalSpent || 0)}đ
+                    {new Intl.NumberFormat("vi-VN").format(
+                      member.totalSpent || 0,
+                    )}
+                    đ
                   </td>
-                  
+
                   <td className="px-6 py-4 text-slate-500">
                     {new Date(member.createdAt).toLocaleDateString("vi-VN")}
                   </td>
 
                   <td className="px-6 py-4 text-center">
-                    <Link 
-                      href={`/super-admin/members/${member._id}`} 
-                      className="text-blue-600 font-semibold hover:underline text-sm"
+                    <Link
+                      href={`/super-admin/members/${member._id}`}
+                      className="text-sm font-semibold text-blue-600 hover:underline"
                     >
                       Chi tiết
                     </Link>

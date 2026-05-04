@@ -10,6 +10,7 @@ export interface Member {
   tier: string;
   totalSpent: number;
   createdAt: string;
+  isDeleted?: boolean;
 }
 
 export interface MemberStats {
@@ -34,6 +35,7 @@ export const getMembers = async (params: {
   limit?: number;
   search?: string;
   tier?: string;
+  status?: string;
 }) => {
   const response = await axiosInstance.get("/users/customers/list", { params });
   return response.data; 

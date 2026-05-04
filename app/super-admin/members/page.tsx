@@ -15,10 +15,11 @@ export default function SuperAdminMembersPage() {
   const [stats, setStats] = useState<MemberStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Lấy params từ URL
+  // Lấy params từ URL (Đã bổ sung lấy status)
   const page = Number(searchParams.get("page")) || 1;
   const search = searchParams.get("search") || "";
   const tier = searchParams.get("tier") || "";
+  const status = searchParams.get("status") || "ACTIVE"; // <-- Bổ sung biến này
 
   // Hàm gọi API
   const fetchData = async () => {
@@ -26,7 +27,13 @@ export default function SuperAdminMembersPage() {
     try {
       const [statsData, listData] = await Promise.all([
         getMemberStats(),
-        getMembers({ page, limit: 10, search, tier: tier === "all" ? undefined : tier })
+        getMembers({ 
+          page, 
+          limit: 10, 
+          search, 
+          tier: tier === "all" ? undefined : tier,
+          status // <-- Truyền status xuống hàm API
+        })
       ]);
       setStats(statsData);
       setMembers(listData.data);
@@ -37,10 +44,10 @@ export default function SuperAdminMembersPage() {
     }
   };
 
-  // Lắng nghe thay đổi URL
+  // Lắng nghe thay đổi URL (Nhớ thêm status vào mảng này)
   useEffect(() => {
     fetchData();
-  }, [page, search, tier]);
+  }, [page, search, tier, status]); // <-- Khi đổi status thì tự fetch lại data
 
   return (
     <div className="flex flex-col gap-6 p-8">

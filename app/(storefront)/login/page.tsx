@@ -43,10 +43,23 @@ export default function LoginPage() {
       // 1. Gọi API đăng nhập thật
       const res = await authApi.login(data);
 
-      // 2. Lưu token vào localStorage để duy trì đăng nhập (Lấy từ nhánh feature/BN-BE của bạn)
+      // =================================================================
+      // 🚨 BƯỚC KIỂM TRA QUYỀN (CHẶN ADMIN CỐ TÌNH ĐĂNG NHẬP TRANG KHÁCH)
+      // =================================================================
+      const userRole = res.user?.role?.toUpperCase(); // Đổi ra chữ in hoa hết cho dễ so sánh
+
+      if (userRole !== "CUSTOMER") {
+        toast.error("Tài khoản quản trị nội bộ không thể đăng nhập tại đây!", {
+          autoClose: 3000,
+        });
+        return; // Dừng ngay lập tức, không chạy các code lưu token ở dưới nữa
+      }
+      // =================================================================
+
+      // 2. Lưu token vào localStorage để duy trì đăng nhập
       localStorage.setItem("access_token", res.access_token);
 
-      // 3. Giải mã JWT để lấy _id (Lấy từ nhánh HEAD để đảm bảo logic lưu store không bị lỗi)
+      // 3. Giải mã JWT để lấy _id
       const decoded = decodeJwtPayload<{
         id: string;
         email: string;
@@ -54,20 +67,12 @@ export default function LoginPage() {
       }>(res.access_token);
 
       // 4. Lưu thông tin User vào Zustand
-      // login({
-      //   _id: decoded?.id ?? null,
-      //   email: res.user?.email ?? data.emailOrPhone,
-      //   fullName: res.user?.fullName ?? "",
-      //   role: res.user?.role ?? "CUSTOMER",
-      //   access_token: res.access_token,
-      // });
-
       login({
-        id: decoded?.id ?? "", // Dùng "" thay vì null để khớp kiểu string
+        id: decoded?.id ?? "",
         email: res.user?.email ?? data.emailOrPhone,
         fullName: res.user?.fullName ?? "",
         role: res.user?.role ?? "CUSTOMER",
-        access_token: res.access_token, // Bây giờ đã hợp lệ vì interface đã có
+        access_token: res.access_token,
       });
 
       toast.success(`Chào mừng ${res.user?.fullName ?? "bạn"} trở lại!`, {

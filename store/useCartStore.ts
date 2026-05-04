@@ -17,11 +17,20 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
+  // --- MỚI THÊM CHO VOUCHER ---
+  appliedVoucher: string | null;
+  discountAmount: number;
+  
   addItem: (item: CartItem) => Promise<void>;
   removeItem: (cartItemId: string) => Promise<void>;
   updateQuantity: (cartItemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   fetchAndSyncCart: () => Promise<void>;
+  
+  // --- HÀM XỬ LÝ VOUCHER ---
+  setVoucher: (code: string, amount: number) => void;
+  resetVoucher: () => void;
+  
   getTotalItems: () => number;
   getTotalPrice: () => number;
 }
@@ -30,14 +39,22 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      
+      // Khởi tạo giá trị mặc định cho Voucher
+      appliedVoucher: null,
+      discountAmount: 0,
+
+      // Hàm gán Voucher khi nhập thành công
+      setVoucher: (code, amount) => set({ appliedVoucher: code, discountAmount: amount }),
+      
+      // Hàm xoá Voucher (dùng khi thanh toán xong hoặc đổi ý)
+      resetVoucher: () => set({ appliedVoucher: null, discountAmount: 0 }),
 
       fetchAndSyncCart: async () => {
         const { user, isLoggedIn } = useAuthStore.getState();
         if (isLoggedIn && user?.id) {
           try {
-            // Assume API returns direct array `{ data: CartItem[] }` or `CartItem[]`
             const data = await cartApi.getCart(user.id);
-            // Handling the case wherever data payload might be wrapped
             const serverItems = Array.isArray(data) ? data : data?.items || [];
             
             set({ items: serverItems });
@@ -78,13 +95,11 @@ export const useCartStore = create<CartStore>()(
             });
           } catch (e) {
             console.error("Lỗi khi đồng bộ addItem lên máy chủ", e);
-            // Optionally: revert state here if failure happens
           }
         }
       },
 
       removeItem: async (cartItemId: string) => {
-        // Optimistic Remove
         set((state) => ({
           items: state.items.filter((item) => item.cartItemId !== cartItemId),
         }));
@@ -100,7 +115,6 @@ export const useCartStore = create<CartStore>()(
       },
 
       updateQuantity: async (cartItemId: string, quantity: number) => {
-        // Optimistic Update
         const targetQ = Math.max(1, quantity);
         set((state) => ({
           items: state.items.map((item) =>
@@ -123,7 +137,8 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: async () => {
-        set({ items: [] });
+        // Khi clearCart (VD: thanh toán thành công), tiện tay reset luôn voucher
+        set({ items: [], appliedVoucher: null, discountAmount: 0 });
         
         const { user, isLoggedIn } = useAuthStore.getState();
         if (isLoggedIn && user?.id) {
@@ -144,7 +159,7 @@ export const useCartStore = create<CartStore>()(
       },
     }),
     {
-      name: "cart-storage", // Cho phép lưu giỏ hàng của khách vô danh local
+      name: "cart-storage", // Zustand sẽ tự lưu cả Voucher vào localStorage dưới key này
     }
   )
 );

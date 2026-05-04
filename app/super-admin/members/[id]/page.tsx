@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Loader2, ArrowLeft, User, Phone, Mail, 
   MapPin, Calendar, ShoppingBag, CreditCard, 
-  Award, Clock, Lock
+  Award, Clock, Lock, Unlock, Edit // Thêm icon Unlock
 } from "lucide-react";
 
 export default function MemberDetailPage() {
@@ -18,6 +18,7 @@ export default function MemberDetailPage() {
 
   const [member, setMember] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isLocking, setIsLocking] = useState(false); // Thêm state quản lý lúc bấm nút
 
   useEffect(() => {
     const fetchMemberDetail = async () => {
@@ -36,7 +37,25 @@ export default function MemberDetailPage() {
     if (id) {
       fetchMemberDetail();
     }
-  }, [id]);
+  }, [id, router]);
+
+  // Hàm xử lý gọi API Khóa / Mở khóa
+  const handleToggleLock = async () => {
+    const actionName = member.isDeleted ? 'mở khóa' : 'khóa';
+    if (!confirm(`Bạn có chắc chắn muốn ${actionName} tài khoản này không?`)) return;
+
+    setIsLocking(true);
+    try {
+      await axios.patch(`http://localhost:3001/users/${id}/toggle-lock`);
+      // Đảo ngược trạng thái isDeleted trên giao diện ngay lập tức mà không cần load lại trang
+      setMember((prev: any) => ({ ...prev, isDeleted: !prev.isDeleted }));
+    } catch (error) {
+      console.error("Lỗi khi đổi trạng thái:", error);
+      alert("Có lỗi xảy ra khi thay đổi trạng thái tài khoản!");
+    } finally {
+      setIsLocking(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -68,9 +87,41 @@ export default function MemberDetailPage() {
             Hồ sơ Khách hàng
           </h1>
         </div>
-        <Button variant="destructive" className="bg-white border border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-2">
-          <Lock className="h-4 w-4" /> Khóa tài khoản
-        </Button>
+        
+        {/* === CỤM NÚT ĐẶT Ở ĐÂY NÈ === */}
+        <div className="flex items-center gap-3">
+          
+          {/* NÚT CHỈNH SỬA MỚI THÊM */}
+          <Link href={`/super-admin/members/${id}/edit`}>
+            <Button 
+              variant="outline" 
+              className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center gap-2 shadow-sm"
+            >
+              <Edit className="h-4 w-4" /> Chỉnh sửa
+            </Button>
+          </Link>
+
+          {/* NÚT KHÓA TÀI KHOẢN (Cũ) */}
+          <Button 
+            onClick={handleToggleLock}
+            disabled={isLocking}
+            className={
+              member.isDeleted 
+                ? "bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2 shadow-sm" 
+                : "bg-white border border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-2"
+            }
+          >
+            {isLocking ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : member.isDeleted ? (
+              <Unlock className="h-4 w-4" />
+            ) : (
+              <Lock className="h-4 w-4" />
+            )}
+            {member.isDeleted ? "Mở khóa tài khoản" : "Khóa tài khoản"}
+          </Button>
+
+        </div>
       </div>
 
       {/* 1. TOP BANNER & MAIN PROFILE CARD */}
@@ -78,7 +129,7 @@ export default function MemberDetailPage() {
         {/* Banner Gradient */}
         <div className="h-32 bg-gradient-to-r from-[#1e3a5f] to-[#2563eb]"></div>
         
-        {/* Profile Content (Kéo ngược lên một chút để avatar đè lên banner) */}
+        {/* Profile Content */}
         <div className="px-8 pb-8 relative">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 -mt-12">
             {/* Left: Avatar & Name */}
@@ -94,9 +145,16 @@ export default function MemberDetailPage() {
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
                     ID: {member._id?.substring(0, 8).toUpperCase()}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700">
-                    ● Hoạt động
+                  
+                  {/* HUY HIỆU ĐỘNG: TRẠNG THÁI */}
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                    member.isDeleted 
+                      ? "bg-red-100 border-red-200 text-red-700" 
+                      : "bg-green-100 border-green-200 text-green-700"
+                  }`}>
+                    {member.isDeleted ? "● Đã khóa" : "● Hoạt động"}
                   </span>
+
                 </div>
               </div>
             </div>
