@@ -1,77 +1,33 @@
 import {
   Injectable,
   ConflictException,
-  UnauthorizedException,
-  NotFoundException, // Thêm cái này để báo lỗi 404
+  NotFoundException, 
 } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt'; // Import bcrypt
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly userRepository: UsersRepository,
-    private readonly jwtService: JwtService,
+    // Đã xóa JwtService ở đây vì việc cấp Token chuyển sang AuthService
   ) {}
 
   // ========================================================
-  // 1. PHẦN AUTH CỦA PARTNER (GIỮ NGUYÊN KHÔNG CHẠM VÀO)
+  // Đã xóa hàm register và login (Chuyển sang auth.service.ts)
   // ========================================================
-  async register(userData: any) {
-    const exists = await this.userRepository.findByEmail(userData.email);
-    if (exists) throw new ConflictException('Email đã tồn tại!');
-
-    // Mã hóa mật khẩu trước khi lưu
-    const saltOrRounds = 10;
-    const hashedPassword = await bcrypt.hash(userData.password, saltOrRounds);
-
-    // Ghi đè password gốc bằng password đã hash
-    const newUserInfo = { ...userData, password: hashedPassword };
-
-    return await this.userRepository.create(newUserInfo);
-  }
-
-  async login(loginData: any) {
-    // Sửa chỗ này: Lấy đúng tên biến emailOrPhone từ Frontend gửi lên
-    // const { emailOrPhone, password } = loginData;
-    // Lấy email nếu có, không thì lấy emailOrPhone. Có cái nào dùng cái đó!
-    const identifier = loginData.email || loginData.emailOrPhone;
-    const password = loginData.password;
-
-    // Sau đó dùng identifier để tìm user
-    const user =
-      await this.userRepository.findByEmailOrPhoneWithPassword(identifier);
-
-    if (!user) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng!');
-    }
-
-    const isPasswordMatching = await bcrypt.compare(
-      password,
-      (user as any).password,
-    );
-
-    if (!isPasswordMatching) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng!');
-    }
-
-    const payload = {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName,
-    };
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-      user: { fullName: user.fullName, email: user.email, role: user.role },
-    };
-  }
 
   async getCustomerList(query: any) {
-    const { page = 1, limit = 10, search, tier } = query;
+    const { page = 1, limit = 10, search, tier, status } = query;
     const skip = (Number(page) - 1) * Number(limit);
     const filter: any = {};
+
+    // 2. THÊM LOGIC LỌC TRẠNG THÁI (LOCKED / ACTIVE)
+    if (status === 'LOCKED') {
+      filter.isDeleted = true; // Chỉ tìm những tài khoản đã bị khóa (xóa mềm)
+    } else if (status === 'ACTIVE') {
+      filter.isDeleted = { $ne: true }; // Chỉ tìm những tài khoản chưa bị khóa
+    }
 
     if (search) {
       filter.$or = [
@@ -152,8 +108,7 @@ export class UsersService {
       throw new ConflictException('Email đã tồn tại trong hệ thống!');
     }
 
-    // 2. Kiểm tra trùng Số điện thoại (Để tránh lỗi 500 bạn vừa gặp)
-    // Bạn nên dùng hàm findByEmailOrPhoneWithPassword đã có trong Repository
+    // 2. Kiểm tra trùng Số điện thoại
     const phoneExists =
       await this.userRepository.findByEmailOrPhoneWithPassword(
         createUserDto.phone,
@@ -162,7 +117,7 @@ export class UsersService {
       throw new ConflictException('Số điện thoại đã tồn tại trong hệ thống!');
     }
 
-    // 3. Hash mật khẩu
+    // 3. Hash mật khẩu (Vẫn giữ lại bcrypt cho hàm này)
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(
       createUserDto.password,
@@ -184,8 +139,14 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.userRepository.findById(id);
-    if (!user) throw new NotFoundException('Không tìm thấy tài khoản!');
+    // Thay vì dùng findById (bị chặn bởi điều kiện isDeleted: false), 
+    // ta dùng findByIdWithDeleted để Admin xem được cả người đã bị khóa.
+    const user = await this.userRepository.findByIdWithDeleted(id);
+    
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+    
     return user;
   }
 
@@ -215,7 +176,6 @@ export class UsersService {
     };
   }
 
-  // Hàm toggleLock của bạn viết chuẩn rồi, giữ nguyên nhé!
   async toggleLock(id: string) {
     // 1. Dùng hàm mới để TÌM ĐƯỢC cả những người đã khóa
     const user = await this.userRepository.findByIdWithDeleted(id);

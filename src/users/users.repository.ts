@@ -64,12 +64,17 @@ export class UsersRepository {
   }
 
   async findCustomersWithPagination(filter: any, skip: number, limit: number) {
-    // Ép điều kiện bắt buộc: Phải là CUSTOMER và chưa bị xóa
+    // Chỉ ép role CUSTOMER, còn isDeleted thì nhường cho tầng Service quyết định
     const finalFilter = {
       ...filter,
       role: 'CUSTOMER',
-      isDeleted: { $ne: true },
     };
+
+    // Nếu filter từ Service không đả động gì đến isDeleted (tức là không lọc), 
+    // thì mặc định ta chỉ lấy người chưa bị xóa (ACTIVE)
+    if (!('isDeleted' in filter)) {
+      finalFilter.isDeleted = { $ne: true };
+    }
 
     return await this.userModel
       .find(finalFilter)
@@ -84,8 +89,13 @@ export class UsersRepository {
     const finalFilter = {
       ...filter,
       role: 'CUSTOMER',
-      isDeleted: { $ne: true },
     };
+
+    // Tương tự, gài mặc định nếu Service không truyền xuống
+    if (!('isDeleted' in filter)) {
+      finalFilter.isDeleted = { $ne: true };
+    }
+
     return await this.userModel.countDocuments(finalFilter).exec();
   }
 
