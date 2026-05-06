@@ -1,27 +1,31 @@
-import Line from "./Line";
 import ProductCard, { ProductType } from "./ProductCard";
 
 interface ProductListProps {
   title?: string;
   products: ProductType[];
+  ctaLabel?: string;
 }
 
-const ProductList = ({ title, products }: ProductListProps) => {
+const ProductList = ({ title, products, ctaLabel }: ProductListProps) => {
   if (!products || products.length === 0) return null;
 
   return (
     <section className="mt-8 w-full">
       {title && (
-        <>
-          <h2 className="mb-6 text-xl font-bold text-gray-900 lg:text-2xl">
+        <div className="mb-4">
+          <h2 className="relative inline-block pb-2 text-2xl font-extrabold tracking-tight text-gray-900 uppercase">
             {title}
+            <span className="absolute bottom-0 left-0 h-[3px] w-12 bg-primary" />
           </h2>
-          <Line />
-        </>
+        </div>
       )}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:gap-6 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
         {products.map((product) => (
-          <ProductCard key={product.id ?? product.name} product={product} />
+          <ProductCard
+            key={product.id ?? product.name}
+            product={product}
+            ctaLabel={ctaLabel}
+          />
         ))}
       </div>
     </section>

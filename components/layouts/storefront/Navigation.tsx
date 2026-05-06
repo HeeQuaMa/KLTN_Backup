@@ -104,8 +104,12 @@ const Navigation = () => {
           <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
         </button>
 
-        <Link href="/build-pc"   className="shrink-0 transition-colors hover:text-gray-200">Build PC (AI)</Link>
-        <Link href="/khuyen-mai" className="text-destructive shrink-0 transition-colors hover:text-red-400">🔥 Khuyến mãi Hot</Link>
+        <Link href="/build-pc" className="shrink-0 transition-colors hover:text-gray-200">
+          BUILD PC
+        </Link>
+        <Link href="/khuyen-mai" className="text-destructive shrink-0 transition-colors hover:text-red-400">
+          🔥 KHUYẾN MÃI HOT
+        </Link>
       </div>
 
       {/* ── Mega-menu dropdown ────────────────────────────────────────────────

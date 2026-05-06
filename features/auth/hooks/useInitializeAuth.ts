@@ -1,33 +1,52 @@
 // features/auth/hooks/useInitializeAuth.ts
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getProfileApi } from "@/features/auth/api/auth.api";
-import axiosInstance from "@/lib/axiosInstance";
+
+const PUBLIC_PATH_PREFIXES = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/products",
+  "/category",
+  "/build-pc",
+  "/cart",
+  "/checkout",
+  "/khuyen-mai",
+];
+
+const isPublicPath = (path: string): boolean => {
+  if (path === "/") return true;
+  return PUBLIC_PATH_PREFIXES.some((prefix) =>
+    prefix === "/" ? false : path.startsWith(prefix),
+  );
+};
 
 export const useInitializeAuth = () => {
   const login = useAuthStore((state) => state.login);
-  const logout = useAuthStore((state) => state.logout); // Giả sử store bạn có hàm logout
+  const logout = useAuthStore((state) => state.logout);
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("access_token");
-      
-      if (token) {
-        try {
-          // Mang token lên Backend kiểm tra và lấy Profile
-          const data = await getProfileApi();
-          // Token hợp lệ -> Cập nhật lại Zustand store
-          login(data.user); 
-        } catch (error) {
-          // Token hết hạn hoặc bị lỗi -> Xóa token và reset store
-          console.error("Token không hợp lệ hoặc đã hết hạn");
-          localStorage.removeItem("access_token");
-          logout();
+      if (!token) return;
+
+      try {
+        const data = await getProfileApi();
+        login(data.user);
+      } catch (error) {
+        if (!isPublicPath(pathname)) {
+          console.warn("Token không hợp lệ hoặc đã hết hạn");
         }
+        localStorage.removeItem("access_token");
+        logout();
       }
     };
 
     checkAuth();
-  }, [login, logout]);
+  }, [login, logout, pathname]);
 };
 

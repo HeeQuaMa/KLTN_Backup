@@ -57,10 +57,10 @@ function HeaderSearchBar() {
       <Button
         type="submit"
         className={cn(
-          "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
+          "bg-primary hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
         )}
       >
-        Search
+        TÌM
       </Button>
     </form>
   );
@@ -78,10 +78,10 @@ function HeaderSearchFallback() {
         type="button"
         disabled
         className={cn(
-          "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
+          "bg-primary hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
         )}
       >
-        Search
+        TÌM
       </Button>
     </div>
   );

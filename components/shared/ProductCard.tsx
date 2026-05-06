@@ -20,6 +20,7 @@ export interface ProductType {
 
 interface ProductCardProps {
   product: ProductType;
+  ctaLabel?: string;
 }
 
 const vndFormatter = new Intl.NumberFormat("vi-VN", {
@@ -32,7 +33,15 @@ const formatPrice = (price: number | undefined | null): string => {
   return vndFormatter.format(price);
 };
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const resolveImageUrl = (image?: string | null): string => {
+  const src = typeof image === "string" ? image.trim() : "";
+  if (!src) return "";
+  if (/^https?:\/\//i.test(src)) return src;
+  if (src.startsWith("/")) return src;
+  return `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/${src.replace(/^\/+/, "")}`;
+};
+
+const ProductCard = ({ product, ctaLabel }: ProductCardProps) => {
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
 
@@ -59,7 +68,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   if (!product?.name && !product?.id) return null;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all">
       <Link href={productId ? `/products/${productId}` : "#"} className="flex flex-col flex-1">
 
         {/* Ảnh sản phẩm */}
@@ -68,22 +77,19 @@ const ProductCard = ({ product }: ProductCardProps) => {
             // <img> thay vì next/image: URL ảnh từ seed/CDN rất đa dạng, tránh phải khai báo từng hostname trong next.config
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.image}
+              src={resolveImageUrl(product.image)}
               alt={product?.name ?? "Product image"}
               className="max-h-full max-w-full object-contain mix-blend-multiply"
               loading="lazy"
               decoding="async"
               referrerPolicy="no-referrer"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
+                const target = e.target as HTMLImageElement;
+                target.style.display = "none";
               }}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100">
-              <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
-                No image
-              </span>
-            </div>
+            <div className="h-full w-full rounded-lg bg-gray-100" />
           )}
 
           {/* Badge giảm giá */}
@@ -112,16 +118,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           )}
 
-          <h3 className="line-clamp-2 text-[15px] font-bold text-gray-900 transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 text-[15px] font-bold text-gray-900">
             {product?.name ?? "—"}
           </h3>
 
-          <p className="mt-1 line-clamp-1 text-sm text-gray-500">
+          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-gray-500">
             {product?.specs ?? ""}
           </p>
 
           <div className="mt-4 mb-4 flex flex-1 flex-col justify-end">
-            <div className="text-destructive text-[20px] font-bold">
+            <div className="text-[24px] font-extrabold text-[#E60012]">
               {formatPrice(product?.price)}
             </div>
             {product?.originalPrice ? (
@@ -139,9 +145,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <Button
         onClick={handleBuyNow}
         disabled={product?.totalStock === 0}
-        className="bg-primary hover:bg-primary/90 mt-auto w-full cursor-pointer rounded-md font-bold text-white disabled:opacity-50"
+        className="bg-primary hover:bg-primary/95 mt-auto h-8 w-full cursor-pointer rounded-[3px] text-[11px] font-bold text-white uppercase disabled:opacity-50"
       >
-        MUA NGAY
+        {ctaLabel || "MUA NGAY"}
       </Button>
     </div>
   );

@@ -112,23 +112,93 @@ export default function CartPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {/* ... (Phần map items bạn giữ nguyên code cũ nhé) ... */}
+              <div className="hidden grid-cols-12 gap-4 rounded-xl bg-gray-100/80 px-4 py-3 text-xs font-bold text-gray-500 uppercase md:grid">
+                <div className="col-span-6">Sản phẩm</div>
+                <div className="col-span-2 text-center">Đơn giá</div>
+                <div className="col-span-2 text-center">Số lượng</div>
+                <div className="col-span-2 text-right">Thành tiền</div>
+              </div>
+
               {items.map((item) => (
                 <div
                   key={item.cartItemId}
-                  className="flex gap-4 rounded-xl border bg-white p-4"
+                  className="group relative grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-12"
                 >
-                  {/* Giữ nguyên logic hiển thị sản phẩm của bạn ở đây */}
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="h-20 w-20 object-contain"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-bold">{item.name}</h4>
-                    <p className="text-destructive font-bold">
+                  <button
+                    onClick={() => removeFromCart(item.cartItemId)}
+                    className="hover:text-destructive absolute right-4 top-4 text-gray-300 transition-colors group-hover:opacity-100 md:top-1/2 md:-translate-y-1/2 md:opacity-0"
+                    title="Xóa sản phẩm"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+
+                  <div className="col-span-1 flex gap-4 pr-6 md:col-span-6 md:pr-0">
+                    <Link
+                      href={`/products/${item.id}`}
+                      className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-gray-100 bg-gray-50 p-2 transition-transform hover:scale-105 md:h-24 md:w-24"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="max-h-full max-w-full object-contain p-2 mix-blend-multiply"
+                      />
+                    </Link>
+                    <div className="flex flex-col justify-center">
+                      <Link
+                        href={`/products/${item.id}`}
+                        className="line-clamp-2 text-sm font-bold text-gray-900 transition-colors hover:text-primary md:text-base"
+                      >
+                        {item.name}
+                      </Link>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Cấu hình: {item.configName || "Mặc định"}
+                      </p>
+                      <div className="mt-2 flex items-center gap-1 text-xs font-medium text-green-600">
+                        <CheckCircle2 className="h-3 w-3" /> Còn hàng
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 hidden flex-col items-center justify-center md:flex">
+                    <span className="font-bold text-gray-900">
                       {formatPrice(item.price)}
-                    </p>
+                    </span>
+                  </div>
+
+                  <div className="col-span-1 flex items-center justify-between md:col-span-2 md:justify-center">
+                    <span className="text-sm font-semibold text-gray-500 md:hidden">
+                      Số lượng:
+                    </span>
+                    <div className="flex items-center rounded-md border border-gray-200 bg-white md:bg-gray-50/50">
+                      <button
+                        onClick={() =>
+                          updateQuantityApi(item.cartItemId, item.quantity - 1)
+                        }
+                        className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="flex h-8 w-8 items-center justify-center text-sm font-semibold">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() =>
+                          updateQuantityApi(item.cartItemId, item.quantity + 1)
+                        }
+                        className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex items-center justify-between md:col-span-2 md:justify-end md:pr-8">
+                    <span className="text-sm font-semibold text-gray-500 md:hidden">
+                      Thành tiền:
+                    </span>
+                    <span className="text-destructive font-bold md:text-lg">
+                      {formatPrice(item.price * item.quantity)}
+                    </span>
                   </div>
                 </div>
               ))}

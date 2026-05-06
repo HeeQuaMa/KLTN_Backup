@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#eef2f7"/>
+      <stop offset="100%" stop-color="#e5ebf3"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="640" fill="url(#bg)"/>
+  <rect x="140" y="170" width="360" height="230" rx="18" fill="#d9e2ef"/>
+  <rect x="110" y="410" width="420" height="40" rx="20" fill="#c3d1e4"/>
+  <circle cx="250" cy="280" r="38" fill="#9db4d2"/>
+  <path d="M205 355l55-50 44 34 50-66 88 82H205z" fill="#b4c5dc"/>
+  <text x="320" y="520" text-anchor="middle" fill="#0f58a8" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700">
+    NetTech
+  </text>
+</svg>

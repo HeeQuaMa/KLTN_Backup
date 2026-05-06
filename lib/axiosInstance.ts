@@ -1,5 +1,25 @@
 import axios from "axios";
 
+const PUBLIC_PATH_PREFIXES = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/products",
+  "/category",
+  "/build-pc",
+  "/cart",
+  "/checkout",
+  "/khuyen-mai",
+];
+
+const isPublicPath = (path: string): boolean => {
+  if (path === "/") return true;
+  return PUBLIC_PATH_PREFIXES.some((prefix) =>
+    prefix === "/" ? false : path.startsWith(prefix),
+  );
+};
+
 const axiosInstance = axios.create({
   // Nhớ ưu tiên trỏ đúng cổng Backend (thường là 3001)
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
@@ -13,7 +33,11 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("admin_token");
+      const path = window.location.pathname;
+      const isAdminArea = path.startsWith("/super-admin") || path.startsWith("/admin");
+      const token = isAdminArea
+        ? localStorage.getItem("admin_token") || localStorage.getItem("access_token")
+        : localStorage.getItem("access_token") || localStorage.getItem("admin_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -39,13 +63,10 @@ axiosInstance.interceptors.response.use(
       // -> Bắt buộc phải xóa token và đá văng ra ngoài bắt đăng nhập lại
       if (status === 401) {
         if (typeof window !== "undefined") {
-          // THÊM DẤU // ĐỂ ẨN 3 DÒNG NÀY ĐI
-          // localStorage.removeItem("admin_token");
-          // localStorage.removeItem("admin_info");
-          // if (window.location.pathname !== "/admin-login") { window.location.href = "/admin-login"; }
-          
-          // Thêm dòng này để xem lỗi
-          console.error("🚨 [401] Backend không nhận ra Token của bạn!");
+          const path = window.location.pathname;
+          if (!isPublicPath(path)) {
+            console.warn("🚨 [401] Backend không nhận ra Token của bạn!");
+          }
         }
       }
       
