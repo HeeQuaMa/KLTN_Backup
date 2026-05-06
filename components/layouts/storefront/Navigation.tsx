@@ -105,8 +105,6 @@ const Navigation = () => {
         </button>
 
         <Link href="/build-pc"   className="shrink-0 transition-colors hover:text-gray-200">Build PC (AI)</Link>
-        <Link href="/bao-hanh"   className="shrink-0 transition-colors hover:text-gray-200">Tra cứu bảo hành</Link>
-        <Link href="/huong-dan"  className="shrink-0 transition-colors hover:text-gray-200">Hướng dẫn mua hàng</Link>
         <Link href="/khuyen-mai" className="text-destructive shrink-0 transition-colors hover:text-red-400">🔥 Khuyến mãi Hot</Link>
       </div>
 

@@ -2,7 +2,6 @@ import { ProductList } from "@/components/shared";
 import { getProducts } from "@/features/storefront/products/api/productsApi";
 import {
   AiPcBuilderBanner,
-  CategoryFilter,
   HeroSection,
 } from "@/features/storefront/home/components";
 
@@ -26,7 +25,6 @@ const page = async () => {
   return (
     <main className="px-4 py-4 md:px-8 md:py-6 lg:px-12 xl:px-16 lg:py-7.5">
       <HeroSection />
-      <CategoryFilter />
       <ProductList title="Sản phẩm nổi bật" products={featuredProducts} />
       <ProductList title="Linh kiện build PC" products={finalBuildPcProducts} />
       <AiPcBuilderBanner />
