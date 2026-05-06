@@ -9,36 +9,117 @@ export class UsersRepository {
     @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
-  // 1. Dùng để check trùng lúc đăng ký
+  /** 1. Tìm user theo Email (Dùng để check trùng lúc đăng ký) */
   async findByEmail(email: string) {
     return await this.userModel
       .findOne({
         email,
-        isDeleted: { $ne: true }, // Sửa từ 'false' thành 'khác true' cho chắc
+        isDeleted: { $ne: true }, 
       })
       .lean();
   }
 
-  // 2. HÀM QUAN TRỌNG NHẤT: Sửa lại logic query ở đây
+  /** 
+   * 2. HÀM QUAN TRỌNG NHẤT: Dùng cho Đăng nhập
+   * Lấy được cả Password (đã bị ẩn) và hỗ trợ tìm theo Email/SĐT/Username 
+   */
   async findByEmailOrPhoneWithPassword(identifier: string) {
-    return await this.userModel
+    const user = await this.userModel
       .findOne({
-        $or: [{ email: identifier }, { phone: identifier }],
-        isDeleted: { $ne: true }, // Dùng $ne true để lách luật nếu DB chưa có trường này
+        $or: [
+          { email: identifier },
+          { phone: identifier },
+          { username: identifier },
+        ],
       })
-      .select('+password') // Ép lấy mật khẩu ra để so sánh
-      .lean();
+      .select('+password') // ✅ Ép Mongoose nhả mật khẩu ra để Bcrypt so sánh
+      .exec(); // ✅ Dùng .exec() để lấy đầy đủ Instance Mongoose
+
+    // Chặn nếu user đã bị xóa mềm
+    if (user && user.isDeleted === true) return null;
+
+    return user;
   }
 
+  /** 3. Tạo mới User (Đảm bảo luôn có isDeleted = false) */
   async create(userData: any) {
-    // Đảm bảo khi tạo mới luôn có isDeleted = false để sau này query đồng bộ
     const newUser = new this.userModel({ ...userData, isDeleted: false });
     return await newUser.save();
   }
 
-  // ========================================================
-  // PHẦN CRUD USERS (Giữ nguyên để Controller không báo lỗi đỏ)
-  // ========================================================
+  /** 4. Lấy danh sách Khách hàng có phân trang & Regex Role */
+  async findCustomersWithPagination(filter: any, skip: number, limit: number) {
+    const finalFilter = {
+      ...filter,
+      // ✅ Dùng Regex để bắt cả 'Customer' và 'CUSTOMER'
+      role: { $regex: /^customer$/i }, 
+    };
+
+    if (!('isDeleted' in filter)) {
+      finalFilter.isDeleted = { $ne: true };
+    }
+
+    return await this.userModel
+      .find(finalFilter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+  }
+
+  /** 5. Đếm tổng số khách hàng (Dùng cho Card thống kê và Phân trang) */
+  async countCustomers(filter: any = {}) {
+    const finalFilter = {
+      ...filter,
+      role: { $regex: /^customer$/i }, // ✅ Đảm bảo con số luôn nhảy đúng
+    };
+
+    if (!('isDeleted' in filter)) {
+      finalFilter.isDeleted = { $ne: true };
+    }
+
+    return await this.userModel.countDocuments(finalFilter).exec();
+  }
+
+  /** 6. Lấy danh sách Nhân viên (Chặn Customer) */
+  async findStaffList(filter: any) {
+    const finalFilter: any = {};
+
+    // 1. Lọc Role: Loại bỏ khách hàng để chỉ hiện nhân sự
+    if (filter.role && filter.role !== 'all') {
+      finalFilter.role = filter.role;
+    } else {
+      // Đảm bảo không lấy nhầm khách hàng vào danh sách nhân sự
+      finalFilter.role = { $nin: ['Customer', 'CUSTOMER'] }; 
+    }
+
+    // 2. Lọc theo trạng thái tài khoản
+    if (filter.status === 'ACTIVE') {
+      finalFilter.isDeleted = { $ne: true };
+    } else if (filter.status === 'LOCKED') {
+      finalFilter.isDeleted = true;
+    }
+
+    // 3. Tìm kiếm theo từ khóa (Tên, Email, hoặc Số điện thoại)
+    if (filter.keyword) {
+      finalFilter.$or = [
+        { fullName: { $regex: filter.keyword, $options: 'i' } },
+        { email: { $regex: filter.keyword, $options: 'i' } },
+        { phone: { $regex: filter.keyword, $options: 'i' } },
+      ];
+    }
+
+    // 4. Thực thi truy vấn và trả về kết quả
+    return await this.userModel
+      .find(finalFilter)
+      .sort({ createdAt: -1 }) // Nhân viên mới nhất sẽ hiện lên đầu
+      .exec();
+  }
+
+  /** ========================================================
+   * CÁC HÀM CRUD CƠ BẢN
+   * ======================================================== */
+  
   async findAll() {
     return await this.userModel.find({ isDeleted: { $ne: true } }).exec();
   }
@@ -63,84 +144,13 @@ export class UsersRepository {
       .exec();
   }
 
-  async findCustomersWithPagination(filter: any, skip: number, limit: number) {
-    // Chỉ ép role CUSTOMER, còn isDeleted thì nhường cho tầng Service quyết định
-    const finalFilter = {
-      ...filter,
-      role: 'CUSTOMER',
-    };
-
-    // Nếu filter từ Service không đả động gì đến isDeleted (tức là không lọc), 
-    // thì mặc định ta chỉ lấy người chưa bị xóa (ACTIVE)
-    if (!('isDeleted' in filter)) {
-      finalFilter.isDeleted = { $ne: true };
-    }
-
-    return await this.userModel
-      .find(finalFilter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-  }
-
-  // Hàm 2: Đếm số lượng dùng cho phân trang và thống kê
-  async countCustomers(filter: any = {}) {
-    const finalFilter = {
-      ...filter,
-      role: 'CUSTOMER',
-    };
-
-    // Tương tự, gài mặc định nếu Service không truyền xuống
-    if (!('isDeleted' in filter)) {
-      finalFilter.isDeleted = { $ne: true };
-    }
-
-    return await this.userModel.countDocuments(finalFilter).exec();
-  }
-
-  async findStaffList(filter: any) {
-    const finalFilter: any = {};
-    
-    // 1. XỬ LÝ LỌC THEO VAI TRÒ (Và chặn Customer)
-    if (filter.role) {
-      finalFilter.role = filter.role; // Nếu user có chọn role cụ thể (VD: Store Manager)
-    } else {
-      finalFilter.role = { $nin: ['Customer', 'CUSTOMER'] }; // Nếu chọn "Tất cả", chặn hiển thị Customer
-    }
-
-    // 2. XỬ LÝ LỌC THEO TRẠNG THÁI (Map 'status' sang 'isDeleted')
-    if (filter.status === 'ACTIVE') {
-      finalFilter.isDeleted = { $ne: true }; // Tìm những người chưa bị khóa (false hoặc undefined)
-    } else if (filter.status === 'LOCKED') {
-      finalFilter.isDeleted = true; // Tìm những người đã bị khóa
-    }
-    // Nếu status là "all" (Tất cả) thì không thêm điều kiện isDeleted, sẽ hiển thị ra hết.
-
-    // 3. XỬ LÝ Ô TÌM KIẾM KEYWORD (Tìm theo Tên hoặc Email)
-    if (filter.keyword) {
-      finalFilter.$or = [
-        { fullName: { $regex: filter.keyword, $options: 'i' } }, // $options: 'i' để không phân biệt hoa thường
-        { email: { $regex: filter.keyword, $options: 'i' } }
-      ];
-    }
-
-    // 4. Gọi DB
-    return await this.userModel
-      .find(finalFilter)
-      .populate('branchId', 'name') 
-      .sort({ createdAt: -1 })
-      .exec();
-  }
-
-
-  // 1. Tìm user bất chấp trạng thái (Để lấy ra được người đã bị khóa)
   async findByIdWithDeleted(id: string) {
     return await this.userModel.findById(id).exec();
   }
 
-  // 2. Cập nhật user bất chấp trạng thái
   async updateWithDeleted(id: string, updateData: any) {
-    return await this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    return await this.userModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .exec();
   }
 }

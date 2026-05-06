@@ -1,20 +1,27 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config'; // PHẢI CÓ
 import { JwtModule } from '@nestjs/jwt';
-import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UsersModule } from '../users/users.module'; // Kéo UsersModule vào để dùng db
+import { AuthController } from './auth.controller';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    UsersModule, 
-    // Cấu hình JWT: thẻ này có hiệu lực 1 ngày (Giống y hệt code cũ của bạn)
-    JwtModule.register({
+    UsersModule,
+    ConfigModule, // PHẢI IMPORT VÀO ĐÂY
+    JwtModule.registerAsync({
       global: true,
-      secret: 'secret_key', // nên để vào .env
-      signOptions: { expiresIn: '1d' },
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        // Lấy từ file .env
+        secret: configService.get<string>('JWT_SECRET'), 
+        signOptions: { expiresIn: '1d' },
+      }),
+      inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
   providers: [AuthService],
+  controllers: [AuthController],
+  exports: [AuthService],
 })
 export class AuthModule {}

@@ -12,11 +12,27 @@ export class Product extends Document {
   @Prop({ required: true, type: Number, min: 0 }) // min: 0 để giá không bị âm
   price: number;
 
+  /** Giá nhập (VND). Khi tạo SP qua API có thể mặc định ~75% giá bán; dữ liệu cũ dùng migrate hoặc seed. */
+  @Prop({ required: false, type: Number, min: 0 })
+  importPrice?: number;
+
   @Prop({ type: Object })
   specifications: any;
 
   @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   category: Types.ObjectId;
+
+  /** Tồn theo chi nhánh: hiển thị "(Q5: 2, Q1: 43)". Khi rỗng → API dùng totalStock làm một kho. */
+  @Prop({
+    type: [
+      {
+        location: { type: String, required: true },
+        stock: { type: Number, default: 0, min: 0 },
+      },
+    ],
+    default: [],
+  })
+  stockByLocation?: Array<{ location: string; stock: number }>;
 
   @Prop({ default: 0, min: 0 }) // min: 0 để kho không bị âm
   totalStock: number;

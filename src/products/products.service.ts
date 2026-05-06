@@ -28,8 +28,12 @@ export class ProductsService {
       brand,
       search,
       category,
+      isActive,
     } = query;
     const filter: any = {};
+
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(Math.max(1, Number(limit) || 10), 500);
 
     // Lọc theo specifications
     if (cpu) filter['specifications.cpu'] = new RegExp(String(cpu), 'i');
@@ -68,7 +72,7 @@ export class ProductsService {
           // Slug không tồn tại → trả về rỗng (không lọc gì)
           return {
             products: [],
-            pagination: { total: 0, page: Number(page), pages: 0 },
+            pagination: { total: 0, page: pageNum, pages: 0 },
           };
         }
       }
@@ -80,13 +84,24 @@ export class ProductsService {
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
+    if (
+      isActive !== undefined &&
+      isActive !== null &&
+      isActive !== '' &&
+      isActive !== 'all'
+    ) {
+      if (isActive === true || isActive === 'true') filter.isActive = true;
+      else if (isActive === false || isActive === 'false')
+        filter.isActive = false;
+    }
+
+    const skip = (pageNum - 1) * limitNum;
 
     const products = await this.productRepository.findAll(
       filter,
       sort,
       skip,
-      Number(limit),
+      limitNum,
     );
     const total = await this.productRepository.count(filter);
 
@@ -94,8 +109,8 @@ export class ProductsService {
       products,
       pagination: {
         total,
-        page: Number(page),
-        pages: Math.ceil(total / Number(limit)),
+        page: pageNum,
+        pages: Math.ceil(total / limitNum) || 1,
       },
     };
   }
@@ -120,6 +135,134 @@ export class ProductsService {
       productData.sku = `SKU-${Date.now()}`;
     }
     return await this.productRepository.create(productData);
+  }
+
+  private parseSpecifications(
+    raw: unknown,
+  ): Record<string, unknown> | undefined {
+    if (raw == null || raw === '') return undefined;
+    if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
+      return raw as Record<string, unknown>;
+    }
+    if (typeof raw !== 'string') return undefined;
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return typeof parsed === 'object' &&
+        parsed !== null &&
+        !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private async resolveCategoryId(data: Record<string, unknown>): Promise<void> {
+    const raw = data['categorySlug'] ?? data['category'];
+    delete data['categorySlug'];
+
+    if (raw == null || String(raw).trim() === '') {
+      throw new BadRequestException(
+        'Thiếu danh mục (categorySlug hoặc category ObjectId).',
+      );
+    }
+
+    const s = String(raw).trim();
+
+    if (Types.ObjectId.isValid(s) && s.length === 24) {
+      data.category = new Types.ObjectId(s);
+      return;
+    }
+
+    const cat = await this.categoriesService.findBySlug(s);
+    data.category = (cat as { _id: Types.ObjectId })._id;
+  }
+
+  /**
+   * POST /products/multipart — text fields + uploaded file URLs in `images`.
+   */
+  async createFromMultipart(input: Record<string, unknown>) {
+    const data: Record<string, unknown> = { ...input };
+
+    const spec = data.specifications;
+    const parsedSpec = this.parseSpecifications(spec);
+    if (parsedSpec !== undefined) {
+      data.specifications = parsedSpec;
+    }
+
+    if (typeof data.images === 'string') {
+      try {
+        data.images = JSON.parse(data.images as string);
+      } catch {
+        data.images = [];
+      }
+    }
+    if (!Array.isArray(data.images)) {
+      data.images = [];
+    }
+
+    await this.resolveCategoryId(data);
+
+    const rawPrice = data.price;
+    if (rawPrice === undefined || String(rawPrice).trim() === '') {
+      throw new BadRequestException('Giá bán (price) không hợp lệ.');
+    }
+    const p = Number(rawPrice);
+    if (!Number.isFinite(p)) {
+      throw new BadRequestException('Giá bán (price) không hợp lệ.');
+    }
+    data.price = p;
+
+    const rawIp = data.importPrice;
+    if (
+      rawIp !== undefined &&
+      rawIp !== null &&
+      String(rawIp).trim() !== ''
+    ) {
+      const ip = Number(rawIp);
+      if (!Number.isFinite(ip)) {
+        throw new BadRequestException('Giá nhập (importPrice) không hợp lệ.');
+      }
+      data.importPrice = ip;
+    } else {
+      delete data.importPrice;
+    }
+
+    const rawTs = data.totalStock;
+    if (rawTs === undefined || rawTs === null || String(rawTs).trim() === '') {
+      data.totalStock = 0;
+    } else {
+      const ts = Number(rawTs);
+      if (!Number.isFinite(ts)) {
+        throw new BadRequestException('Tồn kho không hợp lệ.');
+      }
+      data.totalStock = ts;
+    }
+
+    if (!data.name || String(data.name).trim() === '')
+      throw new BadRequestException('Tên sản phẩm là bắt buộc.');
+
+    if (!data['sku']) {
+      data.sku = `SKU-${Date.now()}`;
+    }
+    if (
+      data.importPrice == null &&
+      data.price != null &&
+      Number.isFinite(Number(data.price))
+    ) {
+      data.importPrice = Math.round(Number(data.price) * 0.75);
+    }
+
+    data.brand =
+      data['brand'] && String(data['brand']).trim() !== ''
+        ? String(data['brand']).trim()
+        : 'Không rõ';
+
+    if (data.description == null) data.description = '';
+
+    if (data.isActive === undefined) data.isActive = true;
+
+    return await this.productRepository.create(data);
   }
 
   async update(id: string, updateData: any) {
