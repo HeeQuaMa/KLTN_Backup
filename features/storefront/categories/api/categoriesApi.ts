@@ -1,4 +1,4 @@
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 
 export interface Category {
   _id: string;

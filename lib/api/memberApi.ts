@@ -9,6 +9,8 @@ export interface Member {
   phone: string;
   tier: string;
   totalSpent: number;
+  totalSpending?: number;
+  spentAmount?: number;
   createdAt: string;
 }
 
@@ -36,5 +38,27 @@ export const getMembers = async (params: {
   tier?: string;
 }) => {
   const response = await axiosInstance.get("/users/customers/list", { params });
-  return response.data; 
+  const rows = Array.isArray(response.data?.data) ? response.data.data : [];
+  const normalizedRows = rows.map((member: Member) => ({
+    ...member,
+    totalSpent: Number(
+      member.totalSpent ?? member.totalSpending ?? member.spentAmount ?? 0,
+    ),
+  }));
+
+  return {
+    ...response.data,
+    data: normalizedRows,
+  };
+};
+
+export const getMemberById = async (id: string): Promise<Member> => {
+  const response = await axiosInstance.get(`/users/${id}`);
+  const member = response.data as Member;
+  return {
+    ...member,
+    totalSpent: Number(
+      member.totalSpent ?? member.totalSpending ?? member.spentAmount ?? 0,
+    ),
+  };
 };

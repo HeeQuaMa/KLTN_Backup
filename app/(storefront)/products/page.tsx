@@ -9,7 +9,7 @@ import {
   mapProductToCard,
   type ProductQueryParams,
 } from "@/lib/api/productApi";
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 
 const PRODUCTS_PER_PAGE = 12;
 

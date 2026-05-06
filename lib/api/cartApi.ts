@@ -1,4 +1,4 @@
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 import { CartItem } from "@/store/useCartStore";
 
 /** Payload gửi lên POST /cart/add */
@@ -52,8 +52,17 @@ export const mapApiItemToCartItem = (item: CartResponse["items"][number]): CartI
 export const cartApi = {
   /** GET /cart/:userId — Lấy giỏ hàng của user */
   getCart: async (userId: string): Promise<CartResponse> => {
-    const response = await http.get<CartResponse>(`/cart/${userId}`);
-    return response.data;
+    try {
+      const response = await http.get<CartResponse>(`/cart/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.warn("[Cart API] getCart failed, returning empty cart:", error);
+      return {
+        _id: "",
+        userId,
+        items: [],
+      };
+    }
   },
 
   /** POST /cart/add — Thêm sản phẩm vào giỏ (hoặc tăng SL nếu đã có) */

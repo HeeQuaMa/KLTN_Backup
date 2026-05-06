@@ -1,4 +1,4 @@
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 import { CartItem } from "@/store/useCartStore";
 import { isValidMongoId } from "@/lib/utils";
 import type { OrderData, OrderStatus } from "@/features/storefront/profile/types/order";

@@ -9,6 +9,12 @@ interface MemberTableProps {
   isLoading: boolean;
 }
 
+const formatCurrency = (value: unknown): string => {
+  const numericValue = Number(value);
+  const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
+  return `${new Intl.NumberFormat("vi-VN").format(safeValue)}đ`;
+};
+
 export function MemberTable({ data, isLoading }: MemberTableProps) {
   return (
     <div className="rounded-xl bg-white shadow-sm overflow-hidden min-h-[400px] relative">
@@ -40,7 +46,10 @@ export function MemberTable({ data, isLoading }: MemberTableProps) {
               </tr>
             ) : (
               data.map((member) => (
-                <tr key={member._id} className="hover:bg-slate-50 transition-colors">
+                <tr
+                  key={member._id}
+                  className="hover:bg-slate-50 transition-colors"
+                >
                   <td className="px-6 py-4 font-semibold text-blue-600">
                     {member.memberCode || "#MEM-XXX"}
                   </td>
@@ -76,7 +85,7 @@ export function MemberTable({ data, isLoading }: MemberTableProps) {
                   </td>
 
                   <td className="px-6 py-4 font-bold text-slate-800">
-                    {new Intl.NumberFormat("vi-VN").format(member.totalSpent || 0)}đ
+                    {formatCurrency(member.totalSpent)}
                   </td>
                   
                   <td className="px-6 py-4 text-slate-500">

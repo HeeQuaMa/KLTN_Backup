@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
+import { getMemberById } from "@/lib/api/memberApi";
 import { 
   Loader2, ArrowLeft, User, Phone, Mail, 
   MapPin, Calendar, ShoppingBag, CreditCard, 
@@ -19,20 +19,29 @@ export default function MemberDetailPage() {
   const [member, setMember] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchMemberDetail = async () => {
-      try {
-        const res = await axios.get(`http://localhost:3001/users/${id}`);
-        setMember(res.data);
-      } catch (error) {
-        console.error("Lỗi lấy chi tiết khách hàng:", error);
-        alert("Không tìm thấy thông tin khách hàng!");
-        router.push("/super-admin/members");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const formatCurrency = (value: unknown): string => {
+    const numericValue = Number(value);
+    const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
+    return `${new Intl.NumberFormat("vi-VN").format(safeValue)}đ`;
+  };
 
+  const getMemberTotalSpent = (data: any): number =>
+    Number(data?.totalSpent ?? data?.totalSpending ?? data?.spentAmount ?? 0);
+
+  const fetchMemberDetail = async () => {
+    try {
+      const data = await getMemberById(id);
+      setMember(data);
+    } catch (error) {
+      console.error("Lỗi lấy chi tiết khách hàng:", error);
+      alert("Không tìm thấy thông tin khách hàng!");
+      router.push("/super-admin/members");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (id) {
       fetchMemberDetail();
     }
@@ -68,8 +77,12 @@ export default function MemberDetailPage() {
             Hồ sơ Khách hàng
           </h1>
         </div>
-        <Button variant="destructive" className="bg-white border border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-2">
-          <Lock className="h-4 w-4" /> Khóa tài khoản
+        <Button
+          disabled
+          className="bg-white border border-red-200 text-red-600 flex items-center gap-2 opacity-70 cursor-not-allowed"
+        >
+          <Lock className="h-4 w-4" />
+          Khóa tài khoản
         </Button>
       </div>
 
@@ -193,7 +206,9 @@ export default function MemberDetailPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-500 mb-1">Tổng chi tiêu</p>
-                <h4 className="text-2xl font-bold text-slate-800">0đ</h4>
+                <h4 className="text-2xl font-bold text-slate-800">
+                  {formatCurrency(getMemberTotalSpent(member))}
+                </h4>
               </div>
             </div>
           </div>

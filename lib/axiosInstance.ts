@@ -20,6 +20,10 @@ axiosInstance.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    // Let browser set proper multipart boundary automatically for FormData payloads
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
     return config;
   },
   (error) => {
@@ -27,11 +31,10 @@ axiosInstance.interceptors.request.use(
   },
 );
 
-// GIỮ NGUYÊN ĐOẠN CŨ CỦA BẠN: Bắt lỗi trả về
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("[API Error]", error?.response?.data || error.message);
+    console.warn("[API Warning]", error?.response?.data || error.message);
     return Promise.reject(error);
   },
 );

@@ -1,4 +1,4 @@
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 
 export const authApi = {
   register: async (data: { fullName: string; email: string; phone: string; password: string }) => {

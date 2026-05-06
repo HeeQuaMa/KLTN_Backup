@@ -47,6 +47,7 @@ function SuperAdminProductsContent() {
           !isActive || isActive === "all"
             ? undefined
             : isActive === "true",
+        includeHidden: "1",
         limit: SUPER_ADMIN_PRODUCTS_LIMIT,
       });
 
@@ -113,7 +114,7 @@ function SuperAdminProductsContent() {
       <ProductFilterBar />
 
       {/* Table - Nhận data thực và hiển thị */}
-      <ProductTable data={products} isLoading={loading} />
+      <ProductTable data={products} isLoading={loading} onRefresh={fetchProducts} />
 
       {pagination && pagination.pages > 1 && (
         <div className="flex flex-wrap items-center justify-center gap-4 rounded-xl border border-slate-100 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">

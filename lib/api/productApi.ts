@@ -1,4 +1,4 @@
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 
 /**
  * Specifications của sản phẩm — cấu trúc linh hoạt.
@@ -95,6 +95,7 @@ export interface ProductQueryParams {
   /** Lọc theo danh mục (category ObjectId hoặc slug) */
   category?: string;
   isActive?: boolean;
+  includeHidden?: boolean | string | number;
   /**
    * 1/true: join BranchInventory + Branch; nhận `branchStocks` và `totalStock` đồng bộ với chi nhánh.
    */
@@ -120,6 +121,35 @@ export const getProducts = async (
   return response.data;
 };
 
+export interface UpdateProductPayload {
+  name?: string;
+  sku?: string;
+  brand?: string;
+  price?: number;
+  importPrice?: number;
+  totalStock?: number;
+  category?: string;
+  description?: string;
+  specifications?: ProductSpecifications;
+  isActive?: boolean;
+}
+
+export const updateProduct = async (
+  id: string,
+  payload: UpdateProductPayload,
+): Promise<Product> => {
+  const response = await http.patch<Product>(`/products/${id}`, payload);
+  return response.data;
+};
+
+export const toggleProductVisibility = async (
+  id: string,
+  isActive: boolean,
+): Promise<Product> => {
+  const response = await http.patch<Product>(`/products/${id}`, { isActive });
+  return response.data;
+};
+
 /** GET /products?inventory=1 — bảng Quản lý kho (importPrice + branchStocks). */
 export const getProductsForInventoryAdmin = async (
   params: Omit<ProductQueryParams, "inventory"> = {},
@@ -127,6 +157,7 @@ export const getProductsForInventoryAdmin = async (
   return getProducts({
     ...params,
     inventory: "1",
+    includeHidden: "1",
     limit: params.limit ?? 300,
     page: params.page ?? 1,
   });

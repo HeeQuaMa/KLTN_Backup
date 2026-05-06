@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronDown, Laptop, Cpu } from "lucide-react";
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 
 interface Category {
   _id: string;

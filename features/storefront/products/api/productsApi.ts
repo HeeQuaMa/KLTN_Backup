@@ -1,4 +1,4 @@
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 import { Product } from "@/features/storefront/products/utils/mockData";
 import { DetailedProduct } from "@/features/storefront/products/utils/mockProductDetail";
 
