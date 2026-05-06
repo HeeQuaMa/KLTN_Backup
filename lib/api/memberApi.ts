@@ -12,6 +12,7 @@ export interface Member {
   totalSpending?: number;
   spentAmount?: number;
   createdAt: string;
+  isDeleted?: boolean;
 }
 
 export interface MemberStats {
@@ -36,6 +37,7 @@ export const getMembers = async (params: {
   limit?: number;
   search?: string;
   tier?: string;
+  status?: string;
 }) => {
   const response = await axiosInstance.get("/users/customers/list", { params });
   const rows = Array.isArray(response.data?.data) ? response.data.data : [];

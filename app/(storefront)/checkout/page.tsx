@@ -33,6 +33,12 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalPrice, clearCart } = useCart();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  
+  // ==========================================
+  // 1. LẤY DISCOUNT TỪ ZUSTAND STORE
+  // ==========================================
+  const { discountAmount, appliedVoucher, resetVoucher } = useCartStore();
+
   const [mounted, setMounted] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderResult, setOrderResult] = useState<{
@@ -133,13 +139,12 @@ export default function CheckoutPage() {
     }).format(price);
   };
 
-  const VNPAY_DISCOUNT =
-    selectedPayment === "VNPAY" ? CHECKOUT_FEES.VNPAY_DISCOUNT_AMOUNT : 0;
-  const finalPrice =
-    totalPrice +
-    CHECKOUT_FEES.SHIPPING_FEE -
-    CHECKOUT_FEES.DISCOUNT -
-    VNPAY_DISCOUNT;
+  // ==========================================
+  // 2. CÔNG THỨC TÍNH TỔNG TÍCH HỢP VOUCHER
+  // ==========================================
+  const VNPAY_DISCOUNT = selectedPayment === "VNPAY" ? CHECKOUT_FEES.VNPAY_DISCOUNT_AMOUNT : 0;
+  const totalDiscount = discountAmount + VNPAY_DISCOUNT;
+  const finalPrice = totalPrice + CHECKOUT_FEES.SHIPPING_FEE - totalDiscount;
 
   const onSubmit = async (data: CheckoutFormData) => {
     // Nếu user tích chọn lưu địa chỉ
@@ -158,7 +163,7 @@ export default function CheckoutPage() {
 
     let generatedOrderId = `#NT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Cảnh báo nếu giỏ hàng có sản phẩm demo (ID không phải MongoDB ObjectId)
+    // Cảnh báo nếu giỏ hàng có sản phẩm demo
     if (hasMockItems(items)) {
       toast.info(
         "Một số sản phẩm demo trong giỏ hàng sẽ không được lưu vào hệ thống.",
@@ -168,13 +173,13 @@ export default function CheckoutPage() {
 
     const realItems = mapCartItemsToOrderItems(items);
 
-    // Có sản phẩm thật: lưu đơn qua API (user từ JWT; BE bỏ qua userId trong body).
     if (realItems.length > 0) {
       try {
         const result = await createOrder({
           items: realItems,
           totalAmount: finalPrice,
           channel: "ONLINE",
+          voucherCode: appliedVoucher,
           customerInfo: {
             fullName: data.fullName,
             phone: data.phone,
@@ -186,6 +191,17 @@ export default function CheckoutPage() {
             paymentMethod: data.paymentMethod as "COD" | "VNPAY" | "MOMO",
           },
         });
+
+        // ==========================================
+        // 3. TÍCH HỢP LOGIC NHẢY TRANG VNPAY
+        // ==========================================
+        if (data.paymentMethod === "VNPAY" && (result as any).paymentUrl) {
+          await clearCart();
+          resetVoucher();
+          window.location.href = (result as any).paymentUrl;
+          return; // Dừng tại đây, không show UI "Thành công" giả
+        }
+
         const code =
           result.orderCode != null && String(result.orderCode).length > 0
             ? String(result.orderCode)
@@ -212,7 +228,10 @@ export default function CheckoutPage() {
       total: finalPrice,
     });
     setIsSuccess(true);
+    
+    // Dọn dẹp giỏ hàng và voucher sau khi mua COD
     await clearCart();
+    resetVoucher();
   };
 
   if (!mounted || !isLoggedIn || (items.length === 0 && !isSuccess))
@@ -339,7 +358,6 @@ export default function CheckoutPage() {
 
         {/* Action Buttons */}
         <div className="mt-10 mb-10 flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
-
           <Link href="/">
             <Button
               variant="outline"
@@ -363,8 +381,6 @@ export default function CheckoutPage() {
         <h1 className="text-heading text-3xl font-extrabold tracking-tight uppercase">
           Thanh toán
         </h1>
-
-        {/* Stepper */}
         <Stepper currentStep={2} />
       </div>
 
@@ -425,71 +441,80 @@ export default function CheckoutPage() {
                   <ErrorMsg msg={errors.email?.message} />
                 </div>
 
-                <div className="relative space-y-1.5 pb-1">
-                  <label className="text-sm font-bold text-gray-700">
-                    Tỉnh / Thành phố *
-                  </label>
-                  <select
-                    {...restCityReg}
-                    value={selectedCity || ""}
-                    onChange={(e) => {
-                      onCityRegChange(e);
-                      setValue("district", "");
-                      setValue("ward", "");
-                    }}
-                    className={`${SelectStyle} ${errors.city ? "border-destructive text-destructive" : "text-gray-900"}`}
-                  >
-                    <option value="" disabled hidden>
-                      Chọn Tỉnh/Thành
-                    </option>
-                    {provinces.map(p => (
-                      <option key={p.code} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-                  <ErrorMsg msg={errors.city?.message} />
-                </div>
-                <div className="relative space-y-1.5 pb-1">
-                  <label className="text-sm font-bold text-gray-700">
-                    Quận / Huyện *
-                  </label>
-                  <select
-                    {...restDistrictReg}
-                    value={selectedDistrict || ""}
-                    onChange={(e) => {
-                      onDistrictRegChange(e);
-                      setValue("ward", "");
-                    }}
-                    className={`${SelectStyle} ${errors.district ? "border-destructive text-destructive" : "text-gray-900"}`}
-                  >
-                    <option value="" disabled hidden>
-                      Chọn Quận/Huyện
-                    </option>
-                    {districts.map(d => (
-                      <option key={d.code} value={d.name}>{d.name}</option>
-                    ))}
-                  </select>
-                  <ErrorMsg msg={errors.district?.message} />
-                </div>
-                <div className="relative col-span-1 space-y-1.5 pb-1 md:col-span-2 md:w-1/2 md:pr-3">
-                  <label className="text-sm font-bold text-gray-700">
-                    Phường / Xã *
-                  </label>
-                  <select
-                    {...restWardReg}
-                    value={selectedWard || ""}
-                    onChange={(e) => {
-                      onWardRegChange(e);
-                    }}
-                    className={`${SelectStyle} ${errors.ward ? "border-destructive text-destructive" : "text-gray-900"}`}
-                  >
-                    <option value="" disabled hidden>
-                      Chọn Phường/Xã
-                    </option>
-                    {wards.map(w => (
-                      <option key={w.code} value={w.name}>{w.name}</option>
-                    ))}
-                  </select>
-                  <ErrorMsg msg={errors.ward?.message} />
+                {/* ========================================== */}
+                {/* 4. GỘP 3 Ô CHỌN TỈNH/HUYỆN/XÃ THÀNH 1 HÀNG */}
+                {/* ========================================== */}
+                <div className="relative col-span-1 md:col-span-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div className="space-y-1.5 pb-1">
+                      <label className="text-sm font-bold text-gray-700">
+                        Tỉnh / Thành phố *
+                      </label>
+                      <select
+                        {...restCityReg}
+                        value={selectedCity || ""}
+                        onChange={(e) => {
+                          onCityRegChange(e);
+                          setValue("district", "");
+                          setValue("ward", "");
+                        }}
+                        className={`${SelectStyle} ${errors.city ? "border-destructive text-destructive" : "text-gray-900"}`}
+                      >
+                        <option value="" disabled hidden>
+                          Chọn Tỉnh/Thành
+                        </option>
+                        {provinces.map(p => (
+                          <option key={p.code} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                      <ErrorMsg msg={errors.city?.message} />
+                    </div>
+
+                    <div className="space-y-1.5 pb-1">
+                      <label className="text-sm font-bold text-gray-700">
+                        Quận / Huyện *
+                      </label>
+                      <select
+                        {...restDistrictReg}
+                        value={selectedDistrict || ""}
+                        onChange={(e) => {
+                          onDistrictRegChange(e);
+                          setValue("ward", "");
+                        }}
+                        className={`${SelectStyle} ${errors.district ? "border-destructive text-destructive" : "text-gray-900"}`}
+                      >
+                        <option value="" disabled hidden>
+                          Chọn Quận/Huyện
+                        </option>
+                        {districts.map(d => (
+                          <option key={d.code} value={d.name}>{d.name}</option>
+                        ))}
+                      </select>
+                      <ErrorMsg msg={errors.district?.message} />
+                    </div>
+
+                    <div className="space-y-1.5 pb-1">
+                      <label className="text-sm font-bold text-gray-700">
+                        Phường / Xã *
+                      </label>
+                      <select
+                        {...restWardReg}
+                        value={selectedWard || ""}
+                        onChange={(e) => {
+                          onWardRegChange(e);
+                        }}
+                        className={`${SelectStyle} ${errors.ward ? "border-destructive text-destructive" : "text-gray-900"}`}
+                      >
+                        <option value="" disabled hidden>
+                          Chọn Phường/Xã
+                        </option>
+                        {wards.map(w => (
+                          <option key={w.code} value={w.name}>{w.name}</option>
+                        ))}
+                      </select>
+                      <ErrorMsg msg={errors.ward?.message} />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="relative col-span-1 space-y-1.5 pb-1 md:col-span-2">
@@ -654,14 +679,23 @@ export default function CheckoutPage() {
                   {formatPrice(CHECKOUT_FEES.SHIPPING_FEE)}
                 </span>
               </div>
+
+              {/* ========================================== */}
+              {/* 5. GIAO DIỆN GIẢM GIÁ (TỔNG HỢP VOUCHER + VNPAY) */}
+              {/* ========================================== */}
               <div className="flex justify-between text-base">
                 <span className="font-medium text-gray-600">Giảm giá:</span>
                 <span className="text-success font-bold">
-                  {VNPAY_DISCOUNT > 0
-                    ? `- ${formatPrice(VNPAY_DISCOUNT)}`
-                    : "- 0đ"}
+                  {totalDiscount > 0
+                    ? `- ${formatPrice(totalDiscount)}`
+                    : "0 đ"}
                 </span>
               </div>
+              {appliedVoucher && (
+                <p className="text-[11px] text-success text-right italic font-medium -mt-1">
+                  (Mã: {appliedVoucher})
+                </p>
+              )}
             </div>
 
             {/* Total */}

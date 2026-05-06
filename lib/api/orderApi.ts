@@ -26,6 +26,7 @@ export interface CreateOrderPayload {
   totalAmount: number;
   customerInfo?: OrderCustomerInfo;
   channel?: "ONLINE" | "O2O";
+  voucherCode?: string | null;
 }
 
 /** Đơn hàng trả về từ backend */

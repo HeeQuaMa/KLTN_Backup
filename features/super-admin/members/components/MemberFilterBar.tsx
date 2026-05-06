@@ -51,6 +51,19 @@ export function MemberFilterBar() {
           />
         </div>
 
+        {/* Dropdown Trạng thái (THÊM MỚI VÀO ĐÂY) */}
+        <div className="relative w-full md:w-auto">
+          <select 
+            onChange={(e) => updateQuery("status", e.target.value)}
+            defaultValue={searchParams.get("status") || "ACTIVE"}
+            className="w-full appearance-none rounded-md border border-slate-200 bg-white py-2 pl-4 pr-10 text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="ACTIVE">Trạng thái: Hoạt động</option>
+            <option value="LOCKED">Trạng thái: Đã khóa</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        </div>
+
         {/* Dropdown */}
         <div className="relative w-full md:w-auto">
           <select 
