@@ -7,6 +7,7 @@ import { SalesModule } from './sales/sales.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { InventoryModule } from './inventory/inventory.module';
 
@@ -26,6 +27,7 @@ import { InventoryModule } from './inventory/inventory.module';
     CategoriesModule,
     PromotionsModule,
     TransactionsModule,
+    AuthModule,
     DashboardModule,
     InventoryModule,
   ],

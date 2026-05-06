@@ -9,6 +9,7 @@ import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { UsersModule } from '../users/users.module';
 import { AdminDashboardGuard } from '../dashboard/guards/admin-dashboard.guard';
+import { Promotion, PromotionSchema } from '../promotions/schemas/promotion.schema';
 
 /**
  * Không có vòng phụ thuộc với UsersModule (UsersModule không import SalesModule).
@@ -21,6 +22,7 @@ import { AdminDashboardGuard } from '../dashboard/guards/admin-dashboard.guard';
       { name: Order.name, schema: OrderSchema },
       { name: Product.name, schema: ProductSchema },
       { name: User.name, schema: UserSchema },
+      { name: Promotion.name, schema: PromotionSchema },
     ]),
     UsersModule,
   ],

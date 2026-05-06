@@ -6,49 +6,20 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
-  Request,
   Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
-import { LoginDto, RegisterDto } from './dto/auth-credentials.dto';
-import { AuthGuard } from './guards/auth.guard';
 
-@ApiTags('Quản lý User & Auth')
-@Controller()
+@ApiTags('Quản lý User')
+@Controller() // Bạn có thể cân nhắc đổi thành @Controller('users') sau này để code chuẩn RESTful hơn
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   // ============================================
-  // NHÓM API AUTHENTICATION (Nhánh feature/BN-BE)
-  // ============================================
-
-  @Post('auth/register')
-  @ApiOperation({ summary: 'Đăng ký tài khoản mới' })
-  async register(@Body() userData: RegisterDto) {
-    return await this.usersService.register(userData);
-  }
-
-  @Post('auth/login')
-  @ApiOperation({ summary: 'Đăng nhập hệ thống' })
-  async login(@Body() loginData: LoginDto) {
-    return await this.usersService.login(loginData);
-  }
-
-  @UseGuards(AuthGuard)
-  @Get('auth/profile') // Đã sửa lại path để ăn khớp với nhánh /auth
-  @ApiOperation({ summary: 'Lấy thông tin cá nhân (Cần Token)' })
-  getProfile(@Request() req) {
-    return {
-      message: 'Lấy thông tin thành công',
-      user: req.user,
-    };
-  }
-
-  // ============================================
   // NHÓM API QUẢN LÝ USERS (Nhánh connect-db)
+  // Đã chuyển phần Auth sang auth.controller.ts
   // ============================================
 
   @Post('users')

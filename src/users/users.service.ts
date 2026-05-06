@@ -1,100 +1,50 @@
 import {
   Injectable,
   ConflictException,
-  UnauthorizedException,
-  NotFoundException, // Thêm cái này để báo lỗi 404
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt'; // Import bcrypt
-import type { LoginDto, RegisterDto } from './dto/auth-credentials.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    private readonly userRepository: UsersRepository,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly userRepository: UsersRepository) {}
 
-  // ========================================================
-  // 1. PHẦN AUTH CỦA PARTNER (GIỮ NGUYÊN KHÔNG CHẠM VÀO)
-  // ========================================================
-  async register(userData: RegisterDto) {
-    const exists = await this.userRepository.findByEmail(userData.email);
-    if (exists) throw new ConflictException('Email đã tồn tại!');
+  // =======================================================
+  // 1. NHÓM API LẤY DỮ LIỆU (GET)
+  // =======================================================
 
-    const phoneTaken = await this.userRepository.findByEmailOrPhoneWithPassword(
-      userData.phone,
-    );
-    if (phoneTaken) {
-      throw new ConflictException('Số điện thoại đã được sử dụng!');
-    }
-
-    // Mã hóa mật khẩu trước khi lưu
-    const saltOrRounds = 10;
-    const hashedPassword = await bcrypt.hash(userData.password, saltOrRounds);
-
-    const newUserInfo = {
-      email: userData.email,
-      fullName: userData.fullName,
-      phone: userData.phone,
-      password: hashedPassword,
-    };
-
-    return await this.userRepository.create(newUserInfo);
+  async findAll() {
+    return await this.userRepository.findAll();
   }
 
-  async login(loginData: LoginDto) {
-    const identifier = String(
-      loginData.email ??
-        loginData.emailOrPhone ??
-        loginData.phone ??
-        loginData.username ??
-        '',
-    ).trim();
-    const password = loginData.password;
-
-    const user =
-      await this.userRepository.findByEmailOrPhoneWithPassword(identifier);
-
-    if (!user) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng!');
-    }
-
-    const stored = (user as { password?: string }).password ?? '';
-    /** bcrypt hash bắt đầu bằng $2a/$2b/$2y; DB cũ có thể còn mật khẩu thường */
-    const looksBcrypt = /^\$2[aby]\$\d{2}\$/.test(stored);
-    const isPasswordMatching = looksBcrypt
-      ? await bcrypt.compare(password, stored)
-      : stored === password;
-
-    if (!isPasswordMatching) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng!');
-    }
-
-    const payload = {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName,
-    };
+  async getStaffList(query: any) {
+    const staffs = await this.userRepository.findStaffList(query);
     return {
-      access_token: await this.jwtService.signAsync(payload),
-      user: { fullName: user.fullName, email: user.email, role: user.role },
+      success: true,
+      data: staffs,
+      total: staffs.length,
     };
   }
 
   async getCustomerList(query: any) {
-    const { page = 1, limit = 10, search, tier } = query;
+    const { page = 1, limit = 10, search, tier, status } = query;
     const skip = (Number(page) - 1) * Number(limit);
-    const filter: any = {};
+    
+    // ✅ BƯỚC QUAN TRỌNG NHẤT: Dựng "tường lửa", CHỈ cho phép lấy Khách hàng
+    const filter: any = {
+      role: { $in: ['CUSTOMER', 'Customer', null] }
+    };
+
+    if (status === 'LOCKED') filter.isDeleted = true;
+    else if (status === 'ACTIVE') filter.isDeleted = { $ne: true };
 
     if (search) {
       filter.$or = [
         { fullName: new RegExp(search, 'i') },
         { email: new RegExp(search, 'i') },
         { phone: new RegExp(search, 'i') },
-        { memberCode: new RegExp(search, 'i') },
       ];
     }
 
@@ -103,12 +53,8 @@ export class UsersService {
     }
 
     const [data, totalItems] = await Promise.all([
-      this.userRepository.findCustomersWithPagination(
-        filter,
-        skip,
-        Number(limit),
-      ),
-      this.userRepository.countCustomers(filter),
+      this.userRepository.findCustomersWithPagination(filter, skip, Number(limit)),
+      this.userRepository.countCustomers(filter), // Hàm count cũng sẽ tự động đếm theo filter này
     ]);
 
     return {
@@ -159,86 +105,84 @@ export class UsersService {
     };
   }
 
+  // =======================================================
+  // 2. NHÓM API TẠO MỚI & CẬP NHẬT
+  // =======================================================
+
   async create(createUserDto: any) {
-    // 1. Kiểm tra trùng Email
-    const emailExists = await this.userRepository.findByEmail(
-      createUserDto.email,
-    );
-    if (emailExists) {
-      throw new ConflictException('Email đã tồn tại trong hệ thống!');
+    console.log('🔥 DỮ LIỆU NHẬN ĐƯỢC:', createUserDto);
+
+    if (!createUserDto.email) {
+      throw new BadRequestException('Email là bắt buộc!');
     }
 
-    // 2. Kiểm tra trùng Số điện thoại (Để tránh lỗi 500 bạn vừa gặp)
-    // Bạn nên dùng hàm findByEmailOrPhoneWithPassword đã có trong Repository
-    const phoneExists =
-      await this.userRepository.findByEmailOrPhoneWithPassword(
-        createUserDto.phone,
-      );
-    if (phoneExists) {
-      throw new ConflictException('Số điện thoại đã tồn tại trong hệ thống!');
+    const emailToSave = createUserDto.email.trim().toLowerCase();
+
+    // 1. Kiểm tra trùng email
+    const emailExists = await this.userRepository.findByEmail(emailToSave);
+    if (emailExists) throw new ConflictException('Email đã tồn tại!');
+
+    // 2. Hash mật khẩu
+    const hashedPassword = await bcrypt.hash(createUserDto.password || 'Nettech@123', 10);
+
+    // 3. Xử lý hạng thẻ (Chỉ gán nếu là khách hàng, và ép Enum chuẩn)
+    const isCustomer = !createUserDto.role || createUserDto.role === 'CUSTOMER';
+    let tierToSave = undefined;
+    
+    if (isCustomer) {
+      tierToSave = createUserDto.initialTier?.includes('Member') 
+        ? 'Member' 
+        : (createUserDto.initialTier || 'Member');
     }
 
-    // 3. Hash mật khẩu
-    const saltOrRounds = 10;
-    const hashedPassword = await bcrypt.hash(
-      createUserDto.password,
-      saltOrRounds,
-    );
-
-    // 4. Tạo Object mới và lưu
+    // 4. Chuẩn bị dữ liệu lưu vào DB
     const newUser = {
       ...createUserDto,
+      email: emailToSave,
       password: hashedPassword,
-      isDeleted: false, // Đảm bảo đồng nhất dữ liệu
+      isDeleted: false,
+      role: createUserDto.role || 'CUSTOMER', 
+      tier: tierToSave,
     };
 
     return await this.userRepository.create(newUser);
   }
 
-  async findAll() {
-    return await this.userRepository.findAll();
-  }
-
-  async findOne(id: string) {
-    const user = await this.userRepository.findById(id);
-    if (!user) throw new NotFoundException('Không tìm thấy tài khoản!');
-    return user;
-  }
-
   async update(id: string, updateData: any) {
-    const updatedUser = await this.userRepository.update(id, updateData);
-    if (!updatedUser)
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    const updated = await this.userRepository.update(id, updateData);
+    if (!updated) {
       throw new NotFoundException('Không tìm thấy tài khoản để cập nhật!');
-    return updatedUser;
-  }
-
-  async remove(id: string) {
-    // Xóa mềm hay xóa cứng tùy thuộc vào hàm delete trong repository
-    const deleted = await this.userRepository.delete(id);
-    if (!deleted)
-      throw new NotFoundException('Không tìm thấy tài khoản để xóa!');
-    return { message: 'Đã xóa tài khoản thành công!' };
-  }
-
-  async getStaffList(query: any) {
-    // Truyền thẳng cục query gốc (chứa keyword, status, role...) từ Controller xuống cho Repository xử lý
-    const staffs = await this.userRepository.findStaffList(query);
-
-    return {
-      success: true,
-      data: staffs,
-      total: staffs.length, // Đếm số lượng để FE hiển thị nếu cần
-    };
+    }
+    return updated;
   }
 
   async toggleLock(id: string) {
-    // 1. Dùng hàm mới để TÌM ĐƯỢC cả những người đã khóa
     const user = await this.userRepository.findByIdWithDeleted(id);
-
-    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
-
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng!');
     return await this.userRepository.updateWithDeleted(id, {
       isDeleted: !user.isDeleted,
     });
+  }
+
+  // =======================================================
+  // 3. CÁC HÀM HỖ TRỢ KHÁC
+  // =======================================================
+
+  async findOne(id: string) {
+    const user = await this.userRepository.findByIdWithDeleted(id);
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng!');
+    return user;
+  }
+
+  async remove(id: string) {
+    const deleted = await this.userRepository.delete(id);
+    if (!deleted) {
+      throw new NotFoundException('Không tìm thấy tài khoản để xóa!');
+    }
+    return { message: 'Đã xóa tài khoản thành công!' };
   }
 }

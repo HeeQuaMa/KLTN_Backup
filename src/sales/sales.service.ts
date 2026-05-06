@@ -11,6 +11,7 @@ import { Order } from './schemas/order.schema';
 import { Product } from '../products/schemas/product.schema';
 import { User } from '../users/schemas/user.schema';
 import type { AdminOrdersQueryDto } from './dto/admin-orders.dto';
+import { Promotion } from 'src/promotions/schemas/promotion.schema';
 
 @Injectable()
 export class SalesService {
@@ -18,6 +19,8 @@ export class SalesService {
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+
+    @InjectModel(Promotion.name) private readonly promotionModel: Model<Promotion>,
   ) {}
 
   private makeOrderCode(): string {
@@ -36,10 +39,17 @@ export class SalesService {
     return base ? `${base}${path}` : path;
   }
 
-  private specSummary(specifications: Record<string, unknown> | null | undefined): string {
+  private specSummary(
+    specifications: Record<string, unknown> | null | undefined,
+  ): string {
     if (!specifications || typeof specifications !== 'object') return '—';
     const s = specifications as Record<string, unknown>;
-    const cpu = s.cpu != null ? String(s.cpu) : s.processor != null ? String(s.processor) : '';
+    const cpu =
+      s.cpu != null
+        ? String(s.cpu)
+        : s.processor != null
+          ? String(s.processor)
+          : '';
     const ram = s.ram != null ? String(s.ram) : '';
     const storage = s.storage != null ? String(s.storage) : '';
     const gpu = s.gpu != null ? String(s.gpu) : '';
@@ -100,9 +110,25 @@ export class SalesService {
       orderCode: this.makeOrderCode(),
       channel: data.channel === 'O2O' ? 'O2O' : 'ONLINE',
       status: 'PENDING_CONFIRMATION',
+      // Nhớ lưu mã voucher vào hóa đơn để sau này còn đối soát nhé sếp
+      voucherCode: data.voucherCode || null,
     });
+    const savedOrder = await newOrder.save();
 
-    return await newOrder.save();
+    // 2. ✅ BƯỚC THẦN THÁNH: Tăng số lượng voucher đã dùng lên 1
+    if (data.voucherCode) {
+      try {
+        await this.promotionModel.updateOne(
+          { code: data.voucherCode }, // Tìm đúng mã voucher khách nhập
+          { $inc: { usedCount: 1 } }, // Lệnh của MongoDB: Cộng 1 vào cột usedCount
+        );
+        console.log(`🚀 Đã cộng 1 lượt dùng cho mã: ${data.voucherCode}`);
+      } catch (err) {
+        console.error('Lỗi khi cập nhật số lượng voucher:', err);
+      }
+    }
+
+    return savedOrder;
   }
 
   async findMyOrders(userId: string, statusFilter?: string) {
@@ -117,12 +143,9 @@ export class SalesService {
     const sf = statusFilter?.trim().toUpperCase();
     if (
       sf &&
-      [
-        'PENDING_CONFIRMATION',
-        'SHIPPING',
-        'COMPLETED',
-        'CANCELLED',
-      ].includes(sf)
+      ['PENDING_CONFIRMATION', 'SHIPPING', 'COMPLETED', 'CANCELLED'].includes(
+        sf,
+      )
     ) {
       if (sf === 'PENDING_CONFIRMATION') {
         filter.$or = [
@@ -146,7 +169,10 @@ export class SalesService {
   private mapOrderDoc(raw: any) {
     const codeRaw =
       raw.orderCode ||
-      `LEGACY-${String(raw._id).replace(/[^a-fA-F0-9]/g, '').slice(-10).toUpperCase()}`;
+      `LEGACY-${String(raw._id)
+        .replace(/[^a-fA-F0-9]/g, '')
+        .slice(-10)
+        .toUpperCase()}`;
     const status =
       raw.status === 'PENDING' ? 'PENDING_CONFIRMATION' : raw.status;
 
@@ -176,9 +202,10 @@ export class SalesService {
   }
 
   /** Nhãn ngày filter (theo giờ máy chủ local). */
-  private resolveDateRange(
-    preset: string | undefined,
-  ): { start?: Date; end?: Date } {
+  private resolveDateRange(preset: string | undefined): {
+    start?: Date;
+    end?: Date;
+  } {
     if (!preset || preset === 'all') return {};
     const now = new Date();
     if (preset === 'today') {
@@ -217,24 +244,18 @@ export class SalesService {
   async getAdminStats(datePreset?: string) {
     const r = this.resolveDateRange(datePreset ?? 'all');
     const timeMatch =
-      r.start && r.end
-        ? { createdAt: { $gte: r.start, $lte: r.end } }
-        : {};
+      r.start && r.end ? { createdAt: { $gte: r.start, $lte: r.end } } : {};
 
-    const [pendingOnline, packing, shipping, cancelled] =
-      await Promise.all([
-        this.orderModel.countDocuments({
-          ...timeMatch,
-          channel: 'ONLINE',
-          $or: [
-            { status: 'PENDING_CONFIRMATION' },
-            { status: 'PENDING' },
-          ],
-        }),
-        this.orderModel.countDocuments({ ...timeMatch, status: 'PACKING' }),
-        this.orderModel.countDocuments({ ...timeMatch, status: 'SHIPPING' }),
-        this.orderModel.countDocuments({ ...timeMatch, status: 'CANCELLED' }),
-      ]);
+    const [pendingOnline, packing, shipping, cancelled] = await Promise.all([
+      this.orderModel.countDocuments({
+        ...timeMatch,
+        channel: 'ONLINE',
+        $or: [{ status: 'PENDING_CONFIRMATION' }, { status: 'PENDING' }],
+      }),
+      this.orderModel.countDocuments({ ...timeMatch, status: 'PACKING' }),
+      this.orderModel.countDocuments({ ...timeMatch, status: 'SHIPPING' }),
+      this.orderModel.countDocuments({ ...timeMatch, status: 'CANCELLED' }),
+    ]);
 
     return { pendingOnline, packing, shipping, cancelled };
   }
@@ -307,24 +328,26 @@ export class SalesService {
   }
 
   private mapAdminRow(raw: any) {
-    const u = raw.user as
-      | { fullName?: string; phone?: string; email?: string }
-      | null;
+    const u = raw.user as {
+      fullName?: string;
+      phone?: string;
+      email?: string;
+    } | null;
     const codeRaw =
       raw.orderCode ||
-      `LEGACY-${String(raw._id).replace(/[^a-fA-F0-9]/g, '').slice(-10).toUpperCase()}`;
+      `LEGACY-${String(raw._id)
+        .replace(/[^a-fA-F0-9]/g, '')
+        .slice(-10)
+        .toUpperCase()}`;
     const code = codeRaw.startsWith('#') ? codeRaw : `#${codeRaw}`;
-    let status =
-      raw.status === 'PENDING' ? 'PENDING_CONFIRMATION' : raw.status;
+    let status = raw.status === 'PENDING' ? 'PENDING_CONFIRMATION' : raw.status;
     return {
       _id: String(raw._id),
       orderCode: code,
       createdAt: raw.createdAt,
       customerName:
-        u?.fullName?.trim() ||
-        (raw.channel === 'O2O' ? 'Khách lẻ' : '—'),
-      customerPhone:
-        u?.phone?.trim() || u?.email?.trim() || '--',
+        u?.fullName?.trim() || (raw.channel === 'O2O' ? 'Khách lẻ' : '—'),
+      customerPhone: u?.phone?.trim() || u?.email?.trim() || '--',
       totalAmount: Number(raw.totalAmount) || 0,
       channel: raw.channel === 'O2O' ? 'O2O' : 'ONLINE',
       status,

@@ -24,7 +24,9 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+      // ✅ ĐÃ SỬA: Trả lại chìa khóa chuẩn đọc từ file .env
+      const secret = this.configService.getOrThrow<string>('JWT_SECRET'); 
+      
       const payload = await this.jwtService.verifyAsync(token, {
         secret,
       });
@@ -54,10 +56,14 @@ export class OptionalJwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request);
-    if (!token) return true;
+    
+    // ĐÃ SỬA: Trả lại tính năng cho phép đi qua nếu không có token
+    if (!token) return true; 
 
     try {
+      // ✅ ĐÃ SỬA: Trả lại chìa khóa chuẩn đọc từ file .env
       const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+      
       const payload = await this.jwtService.verifyAsync(token, {
         secret,
       });
