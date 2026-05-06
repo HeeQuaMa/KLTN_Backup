@@ -29,6 +29,7 @@ export class ProductsService {
       search,
       category,
       isActive,
+      includeHidden,
     } = query;
     const filter: any = {};
 
@@ -84,6 +85,12 @@ export class ProductsService {
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
+    const shouldIncludeHidden =
+      includeHidden === true ||
+      includeHidden === 'true' ||
+      includeHidden === 1 ||
+      includeHidden === '1';
+
     if (
       isActive !== undefined &&
       isActive !== null &&
@@ -93,6 +100,9 @@ export class ProductsService {
       if (isActive === true || isActive === 'true') filter.isActive = true;
       else if (isActive === false || isActive === 'false')
         filter.isActive = false;
+    } else if (!shouldIncludeHidden) {
+      // Storefront should only see active products by default.
+      filter.isActive = true;
     }
 
     const skip = (pageNum - 1) * limitNum;

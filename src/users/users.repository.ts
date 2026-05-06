@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from './schemas/user.schema';
 
 @Injectable()
@@ -48,9 +48,46 @@ export class UsersRepository {
   }
 
   async findById(id: string) {
-    return await this.userModel
-      .findOne({ _id: id, isDeleted: { $ne: true } })
+    if (!Types.ObjectId.isValid(id)) return null;
+    const objectId = new Types.ObjectId(id);
+    const rows = await this.userModel
+      .aggregate([
+        { $match: { _id: objectId, isDeleted: { $ne: true } } },
+        {
+          $lookup: {
+            from: 'orders',
+            let: { userId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ['$user', '$$userId'] },
+                  status: { $ne: 'CANCELLED' },
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  totalSpent: { $sum: { $ifNull: ['$totalAmount', 0] } },
+                },
+              },
+            ],
+            as: 'orderSpendAgg',
+          },
+        },
+        {
+          $addFields: {
+            totalSpent: {
+              $ifNull: [
+                { $arrayElemAt: ['$orderSpendAgg.totalSpent', 0] },
+                { $ifNull: ['$totalSpent', 0] },
+              ],
+            },
+          },
+        },
+        { $project: { orderSpendAgg: 0 } },
+      ])
       .exec();
+    return rows[0] ?? null;
   }
 
   async update(id: string, updateData: any) {
@@ -76,10 +113,44 @@ export class UsersRepository {
     };
 
     return await this.userModel
-      .find(finalFilter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
+      .aggregate([
+        { $match: finalFilter },
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'orders',
+            let: { userId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ['$user', '$$userId'] },
+                  status: { $ne: 'CANCELLED' },
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  totalSpent: { $sum: { $ifNull: ['$totalAmount', 0] } },
+                },
+              },
+            ],
+            as: 'orderSpendAgg',
+          },
+        },
+        {
+          $addFields: {
+            totalSpent: {
+              $ifNull: [
+                { $arrayElemAt: ['$orderSpendAgg.totalSpent', 0] },
+                { $ifNull: ['$totalSpent', 0] },
+              ],
+            },
+          },
+        },
+        { $project: { orderSpendAgg: 0 } },
+      ])
       .exec();
   }
 

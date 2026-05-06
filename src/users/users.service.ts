@@ -237,7 +237,6 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
-    // 2. Dùng hàm mới để CẬP NHẬT ĐƯỢC trạng thái
     return await this.userRepository.updateWithDeleted(id, {
       isDeleted: !user.isDeleted,
     });

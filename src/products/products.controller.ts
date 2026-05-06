@@ -97,6 +97,12 @@ export class ProductsController {
     return this.productsService.updateStock(id, updateStockDto.quantityChange);
   }
 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Cập nhật thông tin sản phẩm' })
+  update(@Param('id') id: string, @Body() updateData: any) {
+    return this.productsService.update(id, updateData);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Xóa sản phẩm khỏi kho' })
   remove(@Param('id') id: string) {
