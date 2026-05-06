@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,84 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
+
+/** Cần tách + bọc Suspense vì `useSearchParams` bắt buộc khi prerender (Next 16). */
+function HeaderSearchBar() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Giữ ô tìm kiếm đồng bộ với ?search= trên trang danh sách sản phẩm
+  useEffect(() => {
+    if (pathname !== "/products") return;
+    setSearchQuery(searchParams.get("search") ?? "");
+  }, [pathname, searchParams]);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (pathname === "/products") {
+      const params = new URLSearchParams(searchParams.toString());
+      if (q) params.set("search", q);
+      else params.delete("search");
+      const qs = params.toString();
+      router.push(qs ? `/products?${qs}` : "/products");
+    } else if (q) {
+      router.push(`/products?search=${encodeURIComponent(q)}`);
+    } else {
+      router.push("/products");
+    }
+  };
+
+  return (
+    <form
+      onSubmit={submitSearch}
+      className="order-last flex h-10 w-full lg:order-0 lg:h-12.5 lg:w-auto"
+    >
+      <Input
+        type="search"
+        name="search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Tìm kiếm linh kiện, Laptop, VGA..."
+        className={cn("h-full flex-1 lg:w-150")}
+        autoComplete="off"
+      />
+      <Button
+        type="submit"
+        className={cn(
+          "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
+        )}
+      >
+        Search
+      </Button>
+    </form>
+  );
+}
+
+function HeaderSearchFallback() {
+  return (
+    <div className="order-last flex h-10 w-full lg:order-0 lg:h-12.5 lg:w-auto">
+      <Input
+        readOnly
+        placeholder="Tìm kiếm linh kiện, Laptop, VGA..."
+        className={cn("h-full flex-1 lg:w-150")}
+      />
+      <Button
+        type="button"
+        disabled
+        className={cn(
+          "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
+        )}
+      >
+        Search
+      </Button>
+    </div>
+  );
+}
 
 function Header() {
   const totalItems = useCartStore((state) => state.getTotalItems());
@@ -30,8 +106,8 @@ function Header() {
   };
 
   // Lấy chữ cái đầu của tên để hiển thị avatar
-  const initials = user?.name
-    ? user.name
+  const initials = user?.fullName
+    ? user.fullName
         .split(" ")
         .slice(-2)
         .map((w: string) => w[0])
@@ -39,7 +115,7 @@ function Header() {
         .toUpperCase()
     : "U";
   return (
-    <header className="relative z-[100] flex flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8 lg:px-12 lg:py-6.25 xl:px-16">
+    <header className="relative z-[10000] flex flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8 lg:px-12 lg:py-6.25 xl:px-16">
       {/* Logo */}
       <div className="text-xl font-bold md:text-2xl lg:text-[32px]">
         <Link href={"/"}>
@@ -48,20 +124,9 @@ function Header() {
       </div>
 
       {/* Search */}
-      <div className="order-last flex h-10 w-full lg:order-0 lg:h-12.5 lg:w-auto">
-        <Input
-          type="search"
-          placeholder="Tìm kiếm linh kiện, Laptop, VGA..."
-          className={cn("h-full flex-1 lg:w-150")}
-        />
-        <Button
-          className={cn(
-            "hover:bg-primary-hover/90 h-full cursor-pointer px-4 text-white lg:w-17.5",
-          )}
-        >
-          Search
-        </Button>
-      </div>
+      <Suspense fallback={<HeaderSearchFallback />}>
+        <HeaderSearchBar />
+      </Suspense>
 
       {/* Right: Cart + Auth */}
       <div className="flex items-center gap-4">
@@ -85,10 +150,10 @@ function Header() {
           {mounted && isLoggedIn && user ? (
             <Link href="/profile" className="flex items-center gap-2 ml-4 cursor-pointer hover:opacity-80 transition-opacity">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#005BAA] text-[15px] font-bold text-white shadow-sm">
-                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
               </div>
               <span className="hidden text-[14px] font-bold text-heading md:block whitespace-nowrap">
-                {user?.name || "User"}
+                {user?.fullName || "User"}
               </span>
             </Link>
           ) : (
@@ -105,10 +170,10 @@ function Header() {
               >
                 {/* Avatar */}
                 <span className="bg-primary flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white">
-                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                  {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
                 </span>
                 <span className="hidden max-w-24 truncate md:block">
-                  {user?.name?.split(" ").pop() || "Tài khoản"}
+                  {user?.fullName?.split(" ").pop() || "Tài khoản"}
                 </span>
                 <ChevronDown
                   className={cn(
@@ -120,13 +185,13 @@ function Header() {
 
               {/* Dropdown menu */}
               {dropdownOpen && (
-                <div className="absolute top-full right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg">
+                <div className="absolute top-full right-0 z-[10050] mt-2 w-44 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg">
                   <div className="border-b border-gray-100 px-4 py-2.5">
                     <p className="text-xs font-semibold text-gray-500">
                       Đã đăng nhập
                     </p>
                     <p className="truncate text-sm font-bold text-gray-900">
-                      {user?.name || "Tài khoản"}
+                      {user?.fullName || "Tài khoản"}
                     </p>
                   </div>
                   <Link

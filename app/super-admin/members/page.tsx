@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Users, UserPlus, Crown } from "lucide-react";
 import { StatCard } from "@/features/super-admin/shared/components/StatCard";
@@ -8,7 +8,7 @@ import { MemberFilterBar } from "@/features/super-admin/members/components/Membe
 import { MemberTable } from "@/features/super-admin/members/components/MemberTable";
 import { getMembers, getMemberStats, Member, MemberStats } from "@/lib/api/memberApi";
 
-export default function SuperAdminMembersPage() {
+function SuperAdminMembersContent() {
   const searchParams = useSearchParams();
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -94,5 +94,13 @@ export default function SuperAdminMembersPage() {
       {/* Data Table */}
       <MemberTable data={members} isLoading={loading} />
     </div>
+  );
+}
+
+export default function SuperAdminMembersPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Đang tải...</div>}>
+      <SuperAdminMembersContent />
+    </Suspense>
   );
 }

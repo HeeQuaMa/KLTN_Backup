@@ -45,7 +45,8 @@ export function MemberTable({ data, isLoading }: MemberTableProps) {
                   className="transition-colors hover:bg-slate-50"
                 >
                   <td className="px-6 py-4 font-semibold text-blue-600">
-                    {member.memberCode || "#MEM-XXX"}
+                    {member.memberCode ||
+                      `#MEM-${member._id.slice(-5).toUpperCase()}`}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">

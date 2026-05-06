@@ -30,7 +30,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const { isLoggedIn, user } = useAuthStore();
-  const userId: string | undefined = user?._id ?? user?.id;
+  const userId: string | undefined = user?.id;
 
   const store = useCartStore();
 

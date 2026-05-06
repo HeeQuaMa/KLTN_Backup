@@ -1,39 +1,59 @@
 import axios from "axios";
 
-
 const axiosInstance = axios.create({
-  // Chú ý: Đảm bảo cổng này khớp với cổng chạy NestJS backend của bạn (thường là 3000)
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+  // Nhớ ưu tiên trỏ đúng cổng Backend (thường là 3001)
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// THÊM MỚI ĐOẠN NÀY: Chặn request trước khi gửi đi để đính kèm Token
+// 1. TỰ ĐỘNG GẮN TOKEN TRƯỚC KHI GỬI ĐI
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Chỉ lấy localStorage khi code đang chạy trên trình duyệt (tránh lỗi Next.js SSR)
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("admin_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error)
 );
 
-// GIỮ NGUYÊN ĐOẠN CŨ CỦA BẠN: Bắt lỗi trả về
+// 2. BẮT LỖI TỪ BACKEND TRẢ VỀ
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("[API Error]", error?.response?.data || error.message);
+    if (error.response) {
+      const status = error.response.status;
+
+      // TRƯỜNG HỢP 1: Lỗi 401 - Chưa đăng nhập hoặc Token hết hạn / Sai token
+      // -> Bắt buộc phải xóa token và đá văng ra ngoài bắt đăng nhập lại
+      if (status === 401) {
+        if (typeof window !== "undefined") {
+          // THÊM DẤU // ĐỂ ẨN 3 DÒNG NÀY ĐI
+          // localStorage.removeItem("admin_token");
+          // localStorage.removeItem("admin_info");
+          // if (window.location.pathname !== "/admin-login") { window.location.href = "/admin-login"; }
+          
+          // Thêm dòng này để xem lỗi
+          console.error("🚨 [401] Backend không nhận ra Token của bạn!");
+        }
+      }
+      
+      // TRƯỜNG HỢP 2: Lỗi 403 - Đã đăng nhập nhưng SAI QUYỀN (Không phải SUPER_ADMIN)
+      // -> KHÔNG ĐÁ VĂNG NỮA, chỉ in lỗi ra console để UI tự hứng và hiện Toast
+      if (status === 403) {
+        console.warn("🚨 [403 Forbidden] Tài khoản của bạn không đủ quyền (SUPER_ADMIN) để xem dữ liệu này.");
+      }
+    }
+    
+    // Trả lỗi về cho các file api (như inventoryApi.ts) để nó nhảy vào hàm catch { toast.error(...) }
     return Promise.reject(error);
-  },
+  }
 );
 
 export default axiosInstance;

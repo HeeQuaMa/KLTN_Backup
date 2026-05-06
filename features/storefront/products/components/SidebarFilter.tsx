@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 import { type ProductQueryParams } from "@/lib/api/productApi";
 
 interface Category {

@@ -21,8 +21,6 @@ import {
 import { authApi } from "@/features/shared/auth/api/authApi";
 import { decodeJwtPayload } from "@/lib/utils";
 
-import { loginApi } from "@/features/auth/api/auth.api";
-
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
@@ -40,7 +38,6 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // 1. Gọi API đăng nhập thật
       const res = await authApi.login(data);
 
       // =================================================================
@@ -79,12 +76,25 @@ export default function LoginPage() {
         autoClose: 2000,
       });
       router.replace("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Lỗi đăng nhập:", error);
-      const msg =
-        error?.response?.data?.message ||
-        "Email hoặc mật khẩu không đúng. Vui lòng thử lại!";
-      toast.error(msg, { autoClose: 3000 });
+      const ax = error as {
+        response?: { status?: number; data?: { message?: unknown } };
+      };
+      const raw = ax?.response?.data?.message;
+      let msg: string;
+      if (Array.isArray(raw)) {
+        msg = raw.map(String).join(" ");
+      } else if (typeof raw === "string" && raw.length > 0) {
+        msg = raw;
+      } else if (ax?.response?.status === 400) {
+        msg =
+          "Thông tin đăng nhập không hợp lệ. Kiểm tra email/SĐT và mật khẩu.";
+      } else {
+        msg =
+          "Email hoặc mật khẩu không đúng. Vui lòng thử lại!";
+      }
+      toast.error(msg, { autoClose: 3500 });
     }
   };
 

@@ -37,23 +37,24 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      // 1. Gọi API đăng ký thật
+      // 1. Gọi API đăng ký
       await registerApi(data);
+      
+      // 2. Nếu code chạy xuống đây tức là API gọi thành công (Status 200/201)
+      toast.success("Đăng ký tài khoản thành công!");
+      router.push("/login"); // Chuyển hướng sang trang đăng nhập
 
-      // 2. Thông báo thành công
-      toast.success("Tạo tài khoản NETTECH thành công! Đang chuyển hướng...", {
-        autoClose: 2000,
-      });
-
-      // 3. Chuyển hướng
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
     } catch (error: any) {
-      console.error("Register Error:", error);
-      const errorMessage =
-        error.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại!";
-      toast.error(errorMessage, { autoClose: 3000 });
+      // 3. NẾU CÓ LỖI (Trùng SĐT, Email, Backend sập...) nó sẽ nhảy vào đây
+      
+      // Lấy câu báo lỗi từ Backend (nếu Backend có cấu hình ném lỗi đàng hoàng)
+      // Nếu Backend trả 500 không có message, thì dùng câu mặc định
+      const errorMessage = 
+        error.response?.data?.message || 
+        "Đăng ký thất bại! Số điện thoại hoặc Email này có thể đã được sử dụng.";
+
+      // Bắn Toast màu đỏ chửi lên góc màn hình
+      toast.error(errorMessage);
     }
   };
 

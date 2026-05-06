@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronDown, Laptop, Cpu } from "lucide-react";
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 
 interface Category {
   _id: string;
@@ -89,7 +89,7 @@ const Navigation = () => {
      * The dropdown MUST be a direct child of <nav> (NOT inside the
      * overflow-x-auto inner div) so it is never clipped.
      */
-    <nav className="bg-primary relative z-[9999] text-sm font-bold text-white uppercase lg:text-base">
+    <nav className="bg-primary relative z-10 text-sm font-bold text-white uppercase lg:text-base">
 
       {/* Scrollable nav bar row */}
       <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap px-4 py-3 sm:gap-10 md:px-8 lg:px-12 xl:px-16 lg:h-12.5 lg:gap-20 lg:py-0 [&::-webkit-scrollbar]:hidden">

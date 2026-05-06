@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createMemberSchema, CreateMemberInput } from "@/features/super-admin/members/utils/memberValidation";
 import { toast } from "react-toastify";
+import axiosInstance from "@/lib/axiosInstance";
 
 export default function CreateMemberPage() {
   const router = useRouter();
@@ -28,10 +29,17 @@ export default function CreateMemberPage() {
     },
   });
 
-  const onSubmit = (data: CreateMemberInput) => {
-    console.log("Form Submitted", data);
-    toast.success("Tạo thành viên mới thành công!");
-    router.push("/super-admin/members");
+  const onSubmit = async (data: CreateMemberInput) => {
+    try {
+      // ✅ PHẢI CÓ DÒNG NÀY THÌ DỮ LIỆU MỚI BAY VỀ DATABASE
+      await axiosInstance.post("http://localhost:3001/users", data); 
+      
+      toast.success("Tạo thành viên mới thành công!");
+      router.push("/super-admin/members");
+      router.refresh(); // Để nó load lại con số 28 lên 29
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Lỗi tạo thành viên");
+    }
   };
 
   const handleRandomPassword = () => {

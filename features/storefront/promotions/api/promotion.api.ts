@@ -1,4 +1,4 @@
-import http from "@/lib/axios";
+import http from "@/lib/axiosInstance";
 
 export const promotionApi = {
   applyVoucher: async (payload: { code: string; orderValue: number }) => {
