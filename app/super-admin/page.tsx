@@ -23,10 +23,15 @@ import {
 } from "@/features/super-admin/dashboard/utils/format";
 
 export default function SuperAdminPage() {
+  console.log('Dashboard Rendering...');
   const monthOptions = useMemo(() => buildMonthOptions(18), []);
   const [sel, setSel] = useState(() => monthOptions[0] ?? { year: 2026, month: 1, label: "" });
 
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [topLoading, setTopLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [chartWeeks, setChartWeeks] = useState<RevenueChartWeek[]>([]);
   const [topProducts, setTopProducts] = useState<TopProductRow[]>([]);
@@ -34,27 +39,58 @@ export default function SuperAdminPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const [s, c, t, r] = await Promise.all([
-        fetchDashboardStats(sel.year, sel.month),
-        fetchRevenueChart(sel.year, sel.month),
-        fetchTopProducts(sel.year, sel.month),
-        fetchRecentOrders(sel.year, sel.month),
-      ]);
-      setStats(s);
-      setChartWeeks(c.weeks);
-      setTopProducts(t);
-      setRecentOrders(r);
-    } catch (e: unknown) {
-      console.error(e);
-      toast.error("Không tải được dashboard. Bạn đã đăng nhập quản trị (Super Admin) chưa?");
+    setStatsLoading(true);
+    setChartLoading(true);
+    setTopLoading(true);
+    setOrdersLoading(true);
+
+    const results = await Promise.allSettled([
+      fetchDashboardStats(sel.year, sel.month),
+      fetchRevenueChart(sel.year, sel.month),
+      fetchTopProducts(sel.year, sel.month),
+      fetchRecentOrders(sel.year, sel.month),
+    ]);
+
+    const [statsResult, chartResult, topResult, ordersResult] = results;
+    console.log('Data fetched:', { statsResult, chartResult, topResult, ordersResult });
+
+    if (statsResult.status === "fulfilled") {
+      setStats(statsResult.value);
+    } else {
+      console.error(statsResult.reason);
       setStats(null);
-      setChartWeeks([]);
-      setTopProducts([]);
-      setRecentOrders([]);
-    } finally {
-      setLoading(false);
     }
+
+    if (chartResult.status === "fulfilled") {
+      setChartWeeks(chartResult.value.weeks);
+    } else {
+      console.error(chartResult.reason);
+      setChartWeeks([]);
+    }
+
+    if (topResult.status === "fulfilled") {
+      setTopProducts(topResult.value);
+    } else {
+      console.error(topResult.reason);
+      setTopProducts([]);
+    }
+
+    if (ordersResult.status === "fulfilled") {
+      setRecentOrders(ordersResult.value);
+    } else {
+      console.error(ordersResult.reason);
+      setRecentOrders([]);
+    }
+
+    if (results.some((result) => result.status === "rejected")) {
+      toast.error("Một số dữ liệu dashboard không tải được, nhưng trang vẫn hiển thị.");
+    }
+
+    setStatsLoading(false);
+    setChartLoading(false);
+    setTopLoading(false);
+    setOrdersLoading(false);
+    setLoading(false);
   }, [sel.year, sel.month]);
 
   useEffect(() => {
@@ -64,6 +100,25 @@ export default function SuperAdminPage() {
   const growthTrend = (pct: number): "up" | "down" =>
     pct >= 0 ? "up" : "down";
 
+  if (loading && !stats && !chartWeeks.length && !topProducts.length && !recentOrders.length) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-8 text-slate-500">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Loading...
+      </div>
+    );
+  }
+
+  const triggerTestNotification = () => {
+    const payload = {
+      orderCode: `TEST-${Date.now()}`,
+      totalPrice: 123456,
+      customerName: "Demo Customer",
+    };
+    console.log('EVENT RECEIVED AT FRONTEND:', payload);
+    toast.success("TEST NOTIFICATION TRIGGERED");
+  };
+
   return (
     <div className="flex flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
@@ -71,6 +126,13 @@ export default function SuperAdminPage() {
           Báo cáo doanh thu toàn hệ thống
         </h1>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={triggerTestNotification}
+            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+          >
+            TEST NOTIFICATION
+          </button>
           {loading && (
             <Loader2 className="h-5 w-5 animate-spin text-slate-400" aria-hidden />
           )}

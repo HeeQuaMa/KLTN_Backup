@@ -35,9 +35,13 @@ axiosInstance.interceptors.request.use(
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
       const isAdminArea = path.startsWith("/super-admin") || path.startsWith("/admin");
+      const cookieToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("admin-token="))
+        ?.split("=")[1];
       const token = isAdminArea
-        ? localStorage.getItem("admin_token") || localStorage.getItem("access_token")
-        : localStorage.getItem("access_token") || localStorage.getItem("admin_token");
+        ? localStorage.getItem("admin_token") || cookieToken || localStorage.getItem("access_token")
+        : localStorage.getItem("access_token") || localStorage.getItem("admin_token") || cookieToken;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

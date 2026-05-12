@@ -7,6 +7,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface LoginForm {
   email?: string;
@@ -15,6 +16,7 @@ interface LoginForm {
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -39,6 +41,10 @@ export default function AdminLoginPage() {
       if (access_token) {
         localStorage.setItem("admin_token", access_token);
         localStorage.setItem("admin_info", JSON.stringify(user));
+        localStorage.setItem("access_token", access_token);
+        document.cookie = `admin-token=${encodeURIComponent(access_token)}; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
+        login({ ...user, access_token });
+        await new Promise((resolve) => setTimeout(resolve, 0));
       } else {
         console.error("Không tìm thấy Token trong response!");
         alert("Lỗi hệ thống: Không lấy được thẻ truy cập.");
@@ -46,7 +52,7 @@ export default function AdminLoginPage() {
       }
 
       alert("Đăng nhập thành công!");
-      router.push("/super-admin");
+      window.location.href = "/super-admin";
       
     } catch (error) {
       console.error("Lỗi đăng nhập:", error);

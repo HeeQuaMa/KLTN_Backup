@@ -3,10 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 // Các thành phần từ nhánh origin/temp-frontend
-import SiteLayout from "@/components/layouts/storefront/SiteLayout";
 import { ToastContainer } from "react-toastify";
 import { CartProvider } from "@/features/storefront/cart/context/CartContext";
 import AuthProvider from "@/features/auth/components/AuthProvider";
+import NotificationProvider from "@/components/providers/NotificationProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +36,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <CartProvider>
-            {children}
+            <NotificationProvider>{children}</NotificationProvider>
           </CartProvider>
         </AuthProvider>
         <ToastContainer />
