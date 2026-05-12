@@ -12,6 +12,7 @@ import { Product } from '../products/schemas/product.schema';
 import { User } from '../users/schemas/user.schema';
 import type { AdminOrdersQueryDto } from './dto/admin-orders.dto';
 import { Promotion } from 'src/promotions/schemas/promotion.schema';
+import { NotificationGateway } from '../notifications/notification.gateway';
 
 @Injectable()
 export class SalesService {
@@ -19,8 +20,8 @@ export class SalesService {
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-
     @InjectModel(Promotion.name) private readonly promotionModel: Model<Promotion>,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   private makeOrderCode(): string {
@@ -114,6 +115,23 @@ export class SalesService {
       voucherCode: data.voucherCode || null,
     });
     const savedOrder = await newOrder.save();
+
+    const customer = await this.userModel
+      .findById(userId)
+      .select('fullName role')
+      .lean();
+
+    const customerName = customer?.fullName ?? 'Khách hàng';
+    const payload = {
+      orderCode: (savedOrder as any).orderCode || (savedOrder as any).code || 'N/A',
+      totalPrice: (savedOrder as any).totalAmount || (savedOrder as any).totalPrice || 0,
+      customerName:
+        (savedOrder as any).customerName || (savedOrder as any).customer?.name || customerName || 'Khách hàng',
+    };
+
+    console.log('Emitting to admin-room...');
+    this.notificationGateway.server.to('admin-room').emit('NEW_ORDER_RECEIVED', payload);
+    console.log('Order event emitted for:', payload.orderCode);
 
     // 2. ✅ BƯỚC THẦN THÁNH: Tăng số lượng voucher đã dùng lên 1
     if (data.voucherCode) {

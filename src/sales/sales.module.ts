@@ -10,6 +10,7 @@ import { User, UserSchema } from '../users/schemas/user.schema';
 import { UsersModule } from '../users/users.module';
 import { AdminDashboardGuard } from '../dashboard/guards/admin-dashboard.guard';
 import { Promotion, PromotionSchema } from '../promotions/schemas/promotion.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 /**
  * Không có vòng phụ thuộc với UsersModule (UsersModule không import SalesModule).
@@ -25,6 +26,7 @@ import { Promotion, PromotionSchema } from '../promotions/schemas/promotion.sche
       { name: Promotion.name, schema: PromotionSchema },
     ]),
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [SalesController, OrdersController],
   providers: [SalesService, AdminDashboardGuard],
