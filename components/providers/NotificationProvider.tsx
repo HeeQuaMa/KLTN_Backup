@@ -32,9 +32,18 @@ export default function NotificationProvider({
     });
 
     if (audioRef.current) {
-      audioRef.current.play().catch((e) => console.warn("Sound blocked", e));
+      const audio = audioRef.current;
+      audio.currentTime = 0; // Luôn bắt đầu từ giây thứ 0
+      audio.play().catch((e) => console.warn("Sound blocked", e));
+
+      // TỰ ĐỘNG DỪNG SAU 3 GIÂY
+      setTimeout(() => {
+        audio.pause();
+        audio.currentTime = 0; // Reset lại để lần sau kêu tiếp
+      }, 3000); 
     }
   };
+
 
   useEffect(() => {
     setMounted(true);
